@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm", "setuptools-git-versioning", "setupt
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "UBC-Solar-Simulation"
+name = "physics"
 authors = [
     {name = "UBC Solar", email = "strategy@ubcsolar.com"},
     {name = "Fisher Xue"},
