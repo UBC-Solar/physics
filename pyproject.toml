@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm", "setuptools-git-versioning", "setuptools-rust"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "UBC-Solar-Simulation"
+authors = [
+    {name = "UBC Solar", email = "strategy@ubcsolar.com"},
+    {name = "Fisher Xue"},
+    {name = "Mihir Nimgade"},
+    {name = "Chris Chang"},
+    {name = "David Widjaja"},
+    {name = "Justin Hua"},
+    {name = "Ilya Veksler"},
+    {name = "Renu Rajamagesh"},
+    {name = "Ritchie Xia"},
+    {name = "Erik Langille"},
+    {name = "Chris Aung"},
+    {name = "Nicolas Ric"},
+    {name = "Ishaan Trivedi"},
+    {name = "Jason Liang"},
+    {name = "Felix Toft"},
+    {name = "Mack Wilson"},
+    {name = "Jonah Lee"},
+    {name = "Tamzeed Quazi"},
+    {name = "Joshua Riefman"}
+]
+maintainers = [
+    {name = "UBC Solar", email = "strategy@ubcsolar.com"},
+    {name = "Joshua Riefman", email = "joshuariefman@gmail.com"},
+    {name = "Renu Rajamagmesh"},
+    {name = "Felix Toft"},
+    {name = "Mack Wilson"},
+    {name = "Jonah Lee"},
+    {name = "Tamzeed Quazi"},
+]
+description = "UBC Solar's Simulation Environment"
+readme = "README.md"
+requires-python = ">=3.9"
+keywords = ["car", "simulation", "solar"]
+license = { file = "LICENSE"}
+version = "0.1.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "Natural Language :: English",
+    "Topic :: Scientific/Engineering :: Physics"
+]
+
+[project.urls]
+Homepage = "https://ubcsolar.com"
+Repository = "https://github.com/UBC-Solar/Simulation"
+Documentation = "https://wiki.ubcsolar.com"
+
+[tool.setuptools-git-versioning]
+enabled = true
+
+[tool.setuptools]
+packages = ["physics"]
+
+[[tool.setuptools-rust.ext-modules]]
+target = "core"          # Private Rust extension module to be nested into the Python package
+path = "Cargo.toml"      # Default value, can be omitted
+binding = "PyO3"         # Default value, can be omitted
+py-limited-api = "auto"  # Default value, can be omitted
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^2.0.1"
+tqdm = "^4.66.5"
+haversine = "^2.8.1"
+numba = "^0.60.0"
+
+[tool.poetry.group.dev.dependencies]
+maturin = "^1.7.0"
+
