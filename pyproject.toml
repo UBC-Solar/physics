@@ -1,9 +1,9 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm", "setuptools-git-versioning", "setuptools-rust"]
+requires = ["setuptools", "setuptools-scm", "setuptools-rust"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "physics"
+name = "ubc-solar-physics"
 authors = [
     {name = "UBC Solar", email = "strategy@ubcsolar.com"},
     {name = "Fisher Xue"},
@@ -39,17 +39,50 @@ readme = "README.md"
 requires-python = ">=3.9"
 keywords = ["car", "simulation", "solar"]
 license = { file = "LICENSE"}
-version = "0.1.0"
+version = "0.1.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Rust",
     "Natural Language :: English",
     "Topic :: Scientific/Engineering :: Physics"
 ]
+dependencies = [
+    "backports.tarfile==1.2.0",
+    "certifi==2024.7.4",
+    "charset-normalizer==3.3.2",
+    "dill==0.3.8",
+    "docutils==0.21.2",
+    "haversine==2.8.1",
+    "idna==3.7",
+    "importlib_metadata==8.2.0",
+    "jaraco.classes==3.4.0",
+    "jaraco.context==5.3.0",
+    "jaraco.functools==4.0.2",
+    "keyring==25.3.0",
+    "llvmlite==0.43.0",
+    "markdown-it-py==3.0.0",
+    "maturin==1.7.0",
+    "mdurl==0.1.2",
+    "more-itertools==10.4.0",
+    "nh3==0.2.18",
+    "numba==0.60.0",
+    "numpy==2.0.1",
+    "pkginfo==1.10.0",
+    "Pygments==2.18.0",
+    "readme_renderer==44.0",
+    "requests==2.32.3",
+    "requests-toolbelt==1.0.0",
+    "rfc3986==2.0.0",
+    "rich==13.7.1",
+    "tqdm==4.66.5",
+    "twine==5.1.1",
+    "urllib3==2.2.2",
+    "zipp==3.20.0",
+]
 
 [project.urls]
 Homepage = "https://ubcsolar.com"
-Repository = "https://github.com/UBC-Solar/Simulation"
+Repository = "https://github.com/UBC-Solar/physics"
 Documentation = "https://wiki.ubcsolar.com"
 
 [tool.setuptools]
@@ -60,20 +93,3 @@ target = "core"          # Private Rust extension module to be nested into the P
 path = "Cargo.toml"      # Default value, can be omitted
 binding = "PyO3"         # Default value, can be omitted
 py-limited-api = "auto"  # Default value, can be omitted
-
-[tool.maturin]
-features = ["pyo3/extension-module"]
-
-[tool.poetry]
-package-mode = false
-
-[tool.poetry.dependencies]
-python = "^3.11"
-numpy = "^2.0.1"
-tqdm = "^4.66.5"
-haversine = "^2.8.1"
-numba = "^0.60.0"
-
-[tool.poetry.group.dev.dependencies]
-maturin = "^1.7.0"
-
