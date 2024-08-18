@@ -8,7 +8,6 @@ import datetime
 from physics.environment import OpenweatherEnvironment
 from physics.environment.weather_forecasts.base_weather_forecasts import BaseWeatherForecasts
 from physics.environment.race import Race
-from haversine import haversine, Unit
 
 import core
 

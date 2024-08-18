@@ -3,12 +3,10 @@ A class to extract local and path weather predictions such as wind_speed,
     wind_direction, cloud_cover and weather type using data from Solcast.
 """
 import numpy as np
-import os
-import logging
-
-from simulation.model.environment.weather_forecasts import BaseWeatherForecasts
-from simulation.model.environment import SolcastEnvironment
-from simulation.common import helpers, constants, Race
+from physics.environment.weather_forecasts import BaseWeatherForecasts
+from physics.environment.solcast_environment import SolcastEnvironment
+from physics.environment.race import Race
+from haversine import haversine, Unit
 
 import core
 
@@ -84,7 +82,7 @@ class SolcastForecasts(BaseWeatherForecasts):
         weather_coords = self.weather_forecast[:, 0, 1:3]
 
         # distances between all the coordinates that we have weather data for
-        weather_path_distances = helpers.calculate_path_distances(weather_coords)
+        weather_path_distances = calculate_path_distances(weather_coords)
         cumulative_weather_path_distances = np.cumsum(weather_path_distances)
 
         # makes every even-index element negative, this allows the use of np.diff() to calculate the sum of consecutive
@@ -210,6 +208,27 @@ class SolcastForecasts(BaseWeatherForecasts):
         #   cos(90 - 90) = cos(0) = 1. Wind speed is moving opposite to the car,
         # car is 270 degrees, cos(90-270) = -1. Wind speed is in direction of the car.
         return wind_speeds * (np.cos(np.radians(wind_directions - vehicle_bearings)))
+
+
+def calculate_path_distances(coords):
+    """
+
+    Obtain the distance between each coordinate by approximating the spline between them
+    as a straight line, and use the Haversine formula (https://en.wikipedia.org/wiki/Haversine_formula)
+    to calculate distance between coordinates on a sphere.
+
+    :param np.ndarray coords: A NumPy array [n][latitude, longitude]
+    :returns path_distances: a NumPy array [n-1][distances],
+    :rtype: np.ndarray
+
+    """
+
+    coords_offset = np.roll(coords, (1, 1))
+    path_distances = []
+    for u, v in zip(coords, coords_offset):
+        path_distances.append(haversine(u, v, unit=Unit.METERS))
+
+    return np.array(path_distances)
 
 
 if __name__ == "__main__":

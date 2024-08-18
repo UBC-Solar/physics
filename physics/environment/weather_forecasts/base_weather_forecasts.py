@@ -1,16 +1,15 @@
-import functools
+import pathlib
 from abc import ABC, abstractmethod
 
 import dill
 import numpy as np
-from simulation.common import Race, constants, helpers
-from simulation.cache.weather import weather_directory
+from physics.environment import Race
 import logging
 import os
 
 
 class BaseWeatherForecasts(ABC):
-    def __init__(self, coords, race: Race, provider: str, origin_coord=None, hash_key=None):
+    def __init__(self, coords, race: Race, provider: str, weather_directory: pathlib.Path, origin_coord=None, hash_key=None, reduction_factor=625):
         self.race = race
 
         if origin_coord is not None:
@@ -20,7 +19,7 @@ class BaseWeatherForecasts(ABC):
         self.dest_coord = coords[-1]
 
         if self.race.race_type == Race.ASC:
-            self.coords = coords[::constants.REDUCTION_FACTOR]
+            self.coords = coords[::reduction_factor]
             weather_file = weather_directory / f"weather_data_{provider}.npz"
         elif self.race.race_type == Race.FSGP:
             self.coords = np.array([coords[0], coords[-1]])
