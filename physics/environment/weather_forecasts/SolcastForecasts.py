@@ -28,7 +28,7 @@ class SolcastForecasts(BaseWeatherForecasts):
             latitude, longitude, wind_speed (m/s), wind_direction (meteorological convention), ghi (W/m^2)
     """
 
-    def __init__(self, coords, race: Race, origin_coord=None, hash_key=None):
+    def __init__(self, coords, race: Race, weather_directory, origin_coord=None, hash_key=None):
 
         """
 
@@ -40,7 +40,7 @@ class SolcastForecasts(BaseWeatherForecasts):
         :param hash_key: key used to identify cached data as valid for a Simulation model
 
         """
-        super().__init__(coords, race, "SOLCAST", origin_coord, hash_key)
+        super().__init__(coords, race, "SOLCAST", weather_directory, origin_coord, hash_key)
         self.race = race
         self.last_updated_time = self.weather_forecast[0, 0, 0]
 

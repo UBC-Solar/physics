@@ -30,7 +30,7 @@ class OpenWeatherForecast(BaseWeatherForecasts):
             (in seconds), dt + timezone_offset (local time), wind_speed, wind_direction, cloud_cover, description_id)
     """
 
-    def __init__(self, coords, race: Race, origin_coord=None, hash_key=None):
+    def __init__(self, coords, race: Race, weather_directory, origin_coord=None, hash_key=None):
 
         """
 
@@ -42,7 +42,7 @@ class OpenWeatherForecast(BaseWeatherForecasts):
         :param hash_key: key used to identify cached data as valid for a Simulation model
 
         """
-        super().__init__(coords, race, "OPENWEATHER", origin_coord, hash_key)
+        super().__init__(coords, race, "OPENWEATHER", weather_directory, origin_coord, hash_key)
 
         self.last_updated_time = self.weather_forecast[0, 0, 2]
 
