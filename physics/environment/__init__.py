@@ -20,7 +20,13 @@ from .gis import (
     GIS,
 )
 
+from .meteorology import (
+    IrradiantMeteorology,
+    BaseMeteorology
+)
+
 __all__ = [
+    "IrradiantMeteorology",
     "OpenweatherEnvironment",
     "SolcastEnvironment",
     "OpenWeatherForecast",

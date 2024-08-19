@@ -1,10 +1,15 @@
-class BaseEnvironment:
+from typing import Optional
+import numpy as np
+from abc import ABC
+
+
+class BaseEnvironment(ABC):
     def __init__(self):
-        self._time_dt = None
-        self._latitude = None
-        self._longitude = None
-        self._wind_speed = None
-        self._wind_direction = None
+        self._wind_speed: Optional[np.ndarray] = None
+        self._wind_direction: Optional[np.ndarray] = None
+        self._solar_irradiance: Optional[np.ndarray] = None
+        self._gis_indices: Optional[np.ndarray] = None
+        self._weather_indices: Optional[np.ndarray] = None
 
     @property
     def time_dt(self):

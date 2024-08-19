@@ -2,12 +2,13 @@ Environment
 ============
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Environment
 
    gis
    weather_forecasts
    solar_calculations
+   meteorology
    :local:
 
 .. autoclass:: physics.environment.SolcastEnvironment
