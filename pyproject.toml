@@ -51,7 +51,7 @@ dependencies = [
     "certifi==2024.7.4",
     "charset-normalizer==3.3.2",
     "dill==0.3.8",
-    "docutils==0.21.2",
+    "docutils",
     "haversine==2.8.1",
     "idna==3.7",
     "importlib_metadata==8.2.0",
