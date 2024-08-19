@@ -1,6 +1,6 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../physics'))  # Adjust as necessary
+sys.path.insert(0, os.path.abspath('../../../physics'))  # Adjust as necessary
 print(sys.path)
 print(os.listdir(os.getcwd()))
 print(os.listdir(sys.path[0]))
