@@ -1,12 +1,12 @@
 Battery
 =======
 
-.. autoclass:: models.battery.BasicBattery
+.. autoclass:: physics.models.battery.BasicBattery
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: models.battery.BaseBattery
+.. autoclass:: physics.models.battery.BaseBattery
    :members:
    :undoc-members:
    :show-inheritance:

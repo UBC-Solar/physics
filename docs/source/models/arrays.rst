@@ -1,12 +1,12 @@
 Solar Arrays
 ============
 
-.. autoclass:: models.arrays.BasicArray
+.. autoclass:: physics.models.arrays.BasicArray
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: models.arrays.BaseArray
+.. autoclass:: physics.models.arrays.BaseArray
    :members:
    :undoc-members:
    :show-inheritance:

@@ -6,12 +6,12 @@ Weather Forecasts
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: environment.weather_forecasts.OpenWeatherForecast
+.. autoclass:: physics.environment.weather_forecasts.OpenWeatherForecast
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: environment.weather_forecasts.BaseWeatherForecasts
+.. autoclass:: physics.environment.weather_forecasts.BaseWeatherForecasts
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,12 +1,12 @@
 Motor
 =====
 
-.. autoclass:: models.motor.BasicMotor
+.. autoclass:: physics.models.motor.BasicMotor
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: models.motor.BaseMotor
+.. autoclass:: physics.models.motor.BaseMotor
    :members:
    :undoc-members:
    :show-inheritance:
