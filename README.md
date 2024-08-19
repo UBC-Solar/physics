@@ -2,6 +2,8 @@
 
 <!-- marker-index-start -->
 
+[![Documentation Status](https://readthedocs.org/projects/ubc-solar-physics/badge/?version=latest)](https://ubc-solar-physics.readthedocs.io/en/latest/?badge=latest)
+
 UBC Solar's physics and environment models for simulating our groundbreaking solar cars.
 
 The API is currently unstable, and backwards compatibility may not be maintained. 
