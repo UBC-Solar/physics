@@ -1,12 +1,12 @@
 GIS
 ===
 
-.. autoclass:: physics.environment.gis.GIS
+.. autoclass:: environment.gis.GIS
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: physics.environment.gis.BaseGIS
+.. autoclass:: environment.gis.BaseGIS
    :members:
    :undoc-members:
    :show-inheritance:

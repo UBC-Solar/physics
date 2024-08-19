@@ -1,12 +1,12 @@
 Regen
 =====
 
-.. autoclass:: physics.models.regen.BasicRegen
+.. autoclass:: models.regen.BasicRegen
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: physics.models.regen.BaseRegen
+.. autoclass:: models.regen.BaseRegen
    :members:
    :undoc-members:
    :show-inheritance:

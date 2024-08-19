@@ -1,12 +1,12 @@
 LVS
 ===
 
-.. autoclass:: physics.models.lvs.BasicLVS
+.. autoclass:: models.lvs.BasicLVS
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: physics.models.lvs.BaseLVS
+.. autoclass:: models.lvs.BaseLVS
    :members:
    :undoc-members:
    :show-inheritance:
