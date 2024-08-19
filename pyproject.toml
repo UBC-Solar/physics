@@ -87,7 +87,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://ubcsolar.com"
 Repository = "https://github.com/UBC-Solar/physics"
-Documentation = "https://wiki.ubcsolar.com"
+Documentation = "https://ubc-solar-physics.readthedocs.io/en/latest/"
 
 [tool.setuptools]
 packages = ["physics"]
