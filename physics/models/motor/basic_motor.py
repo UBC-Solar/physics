@@ -98,7 +98,7 @@ class BasicMotor(BaseMotor):
 
         return e_mc
 
-    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, parameters=None):
+    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick):
         """
 
         Create a function which takes in array of elevation, array of wind speed, required
@@ -112,14 +112,10 @@ class BasicMotor(BaseMotor):
         :rtype: np.ndarray
 
         """
-        if parameters is None:
-            parameters = self.parameters
-
         required_speed_ms = required_speed_kmh / 3.6
 
         acceleration_ms2 = np.clip(np.gradient(required_speed_ms), a_min=0, a_max=None)
         acceleration_force = acceleration_ms2 * self.vehicle_mass
-        acceleration_force *= np.polyval([parameters[0], parameters[1]], acceleration_ms2)
 
         required_angular_speed_rads = required_speed_ms / self.tire_radius
 
@@ -135,7 +131,6 @@ class BasicMotor(BaseMotor):
 
         motor_output_energies = required_angular_speed_rads * net_force * self.tire_radius * tick
         motor_output_energies = np.clip(motor_output_energies, a_min=0, a_max=None)
-        motor_output_energies *= np.polyval([parameters[2], parameters[3]], motor_output_energies)
 
         e_m = self.calculate_motor_efficiency(required_angular_speed_rads, motor_output_energies, tick)
         e_mc = self.calculate_motor_controller_efficiency(required_angular_speed_rads, motor_output_energies, tick)
