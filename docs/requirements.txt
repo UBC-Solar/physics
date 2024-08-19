@@ -39,7 +39,7 @@ rich==13.7.1
 snowballstemmer==2.2.0
 Sphinx==7.4.7
 sphinx-autodoc-typehints
-sphinx-rtd-theme==2.0.0
+sphinx-rtd-theme
 sphinxcontrib-applehelp
 sphinxcontrib-devhelp
 sphinxcontrib-htmlhelp
