@@ -1,4 +1,4 @@
-sphinx==8.0.2
-myst-parser==4.0.0
-sphinx-autodoc-typehints==2.2.3
-sphinx-rtd-theme==2.0.0
+sphinx
+myst-parser
+sphinx-autodoc-typehints
+sphinx-rtd-theme
