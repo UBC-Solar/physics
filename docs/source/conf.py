@@ -28,7 +28,7 @@ extensions = [
     'myst_parser',           # For Markdown support if needed
 ]
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = "pydata_sphinx_theme"
 
 autodoc_mock_imports = ['core']
 source_suffix = ['.rst', '.md']
