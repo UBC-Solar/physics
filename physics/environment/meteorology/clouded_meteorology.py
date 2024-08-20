@@ -1,32 +1,145 @@
-#!/usr/bin/env python
-
-"""
-A class to perform calculation and approximations for obtaining quantities
-    such as solar time, solar position, and the various types of solar irradiance.
-"""
-
-import datetime
+from physics.environment.meteorology.base_meteorology import BaseMeteorology
+from physics.environment.gis.gis import calculate_path_distances
 import numpy as np
-
 from physics.environment.race import Race
-from physics.environment.solar_calculations.base_solar_calculations import BaseSolarCalculations
-from physics.environment.openweather_environment import OpenweatherEnvironment
-import core
 from numba import jit
+import core
+from typing import Optional
+import datetime
 
 
-class OpenweatherSolarCalculations(BaseSolarCalculations):
+class CloudedMeteorology(BaseMeteorology):
+    """
+    CloudedMeteorology encapsulates meteorological data that includes
+    cloud cover, but not solar irradiance (necessitating manual computation).
+    """
+    def __init__(self, race, weather_forecasts):
+        super().__init__()
 
-    def __init__(self, race: Race):
+        self._latitude: Optional[np.ndarray] = None
+        self._longitude: Optional[np.ndarray] = None
+        self._unix_time: Optional[np.ndarray] = None
+        self._cloud_cover: Optional[np.ndarray] = None
+
+        self._race = race
+        self._weather_forecast = weather_forecasts
+
+        self.S_0 = 1367.0  # Solar Constant, 1367W/m^2
+
+        self.last_updated_time = self._weather_forecast[0, 0, 2]
+
+    def spatially_localize(self, cumulative_distances: np.ndarray) -> None:
         """
 
-        Initializes the instance of a SolarCalculations class
+        IMPORTANT: we only have weather coordinates for a discrete set of coordinates. However, the car could be at any
+        coordinate in between these available weather coordinates. We need to figure out what coordinate the car is at
+        at each timestep and then we can figure out the full weather forecast at each timestep.
+
+        For example, imagine the car is at some coordinate (10, 20). Further imagine that we have a week's worth of
+        weather forecasts for the following five coordinates: (5, 4), (11, 19), (20, 30), (40, 30), (0, 60). Which
+        set of weather forecasts should we choose? Well, we should choose the (11, 19) one since our coordinate
+        (10, 20) is closest to (11, 19). This is what the following code is accomplishing. However, it is not dealing
+        with the coordinates directly but rather is dealing with the distances between the coordinates.
+
+        Furthermore, once we have chosen a week's worth of weather forecasts for a specific coordinate, we must isolate
+        a single weather forecast depending on what time the car is at the coordinate (10, 20). That is the job of the
+        `get_weather_forecast_in_time()` method.
+
+        :param np.ndarray cumulative_distances: NumPy Array representing cumulative distances theoretically achievable for a given input speed array
 
         """
-        self.S_0 = 1367  # Solar Constant: W/m^2
-        self.race = race
 
-    # ----- Calculation of solar position in the sky -----
+        # if racing FSGP, there is no need for distance calculations. We will return only the origin coordinate
+        # This characterizes the weather at every point along the FSGP tracks
+        # with the weather at a single coordinate on the track, which is great for reducing the API calls and is a
+        # reasonable assumption to make for FSGP only.
+        if self._race.race_type == Race.FSGP:
+            self._weather_indices = np.zeros_like(cumulative_distances, dtype=int)
+            return
+
+        # a list of all the coordinates that we have weather data for
+        weather_coords = self._weather_forecast[:, 0, 0:2]
+
+        # distances between all the coordinates that we have weather data for
+        weather_path_distances = calculate_path_distances(weather_coords)
+        cumulative_weather_path_distances = np.cumsum(weather_path_distances)
+
+        # makes every even-index element negative, this allows the use of np.diff() to calculate the sum of consecutive
+        # elements
+        cumulative_weather_path_distances[::2] *= -1
+
+        # contains the average distance between two consecutive elements in the cumulative_weather_path_distances array
+        average_distances = np.abs(np.diff(cumulative_weather_path_distances) / 2)
+
+        return core.closest_weather_indices_loop(cumulative_distances, average_distances)
+
+    def temporally_localize(self, unix_timestamps, start_time, tick) -> None:
+        """
+
+        Takes in an array of indices of the weather_forecast array, and an array of timestamps. Uses those to figure out
+        what the weather forecast is at each time step being simulated.
+
+        we only have weather at discrete timestamps. The car however can be in any timestamp in
+        between. Therefore, we must be able to choose the weather timestamp that is closest to the one that the car is in
+        so that we can more accurately determine the weather experienced by the car at that timestamp.
+
+        For example, imagine the car is at some coordinate (x,y) at timestamp 100. Imagine we know the weather forecast
+        at (x,y) for five different timestamps: 0, 30, 60, 90, and 120. Which weather forecast should we
+        choose? Clearly, we should choose the weather forecast at 90 since it is the closest to 100. That's what the
+        below code is accomplishing.
+
+        :param np.ndarray unix_timestamps: (int[N]) unix timestamps of the vehicle's journey
+        :param int tick: length of a tick in seconds
+        :returns:
+            - A NumPy array of size [N][9]
+            - [9] (latitude, longitude, unix_time, timezone_offset, unix_time_corrected, wind_speed, wind_direction,
+                        cloud_cover, precipitation, description):
+        :rtype: np.ndarray
+
+        """
+        weather_data = core.weather_in_time(unix_timestamps.astype(np.int64), self._weather_indices.astype(np.int64), self._weather_forecast, 4)
+        # roll_by_tick = int(3600 / tick) * (24 + start_hour - hour_from_unix_timestamp(weather_data[0, 2]))
+        # weather_data = np.roll(weather_data, -roll_by_tick, 0)
+
+        self._latitude = weather_data[:, 0]
+        self._longitude = weather_data[:, 1]
+        self._unix_time = weather_data[:, 2]
+        self._wind_speed = weather_data[:, 5]
+        self._wind_direction = weather_data[:, 6]
+        self._cloud_cover = weather_data[:, 7]
+
+    def calculate_solar_irradiances(self, coords, time_zones, local_times, elevations):
+        """
+
+        Calculates the Global Horizontal Irradiance from the Sun, relative to a location
+        on the Earth, for arrays of coordinates, times, elevations and weathers
+        https://www.pveducation.org/pvcdrom/properties-of-sunlight/calculation-of-solar-insolation
+        Note: If local_times and time_zones are both unadjusted for Daylight Savings, the
+                calculation will end up just the same
+
+        :param np.ndarray coords: (float[N][lat, lng]) array of latitudes and longitudes
+        :param np.ndarray time_zones: (int[N]) time zones at different locations in seconds relative to UTC
+        :param np.ndarray local_times: (int[N]) unix time that the vehicle will be at each location. (Adjusted for Daylight Savings)
+        :param np.ndarray elevations: (float[N]) elevation from sea level in m
+        :returns: (float[N]) Global Horizontal Irradiance in W/m2
+        :rtype: np.ndarray
+
+        """
+        day_of_year, local_time = core.calculate_array_ghi_times(local_times)
+
+        ghi = self._calculate_GHI(coords[:, 0], coords[:, 1], time_zones,
+                                  day_of_year, local_time, elevations, self._cloud_cover)
+
+        stationary_irradiance = self._calculate_angled_irradiance(coords[:, 0], coords[:, 1], time_zones, day_of_year,
+                                                                  local_time, elevations, self._cloud_cover)
+
+        # Use stationary irradiance when the car is not driving
+        effective_irradiance = np.where(
+            np.logical_not(self._race.driving_boolean),
+            stationary_irradiance,
+            ghi)
+
+        return effective_irradiance
 
     @staticmethod
     def _calculate_hour_angle(time_zone_utc, day_of_year, local_time, longitude):
@@ -291,13 +404,6 @@ class OpenweatherSolarCalculations(BaseSolarCalculations):
 
     # ----- Calculation of modes of solar irradiance, but returning numpy arrays -----
     @staticmethod
-    def _python_calculate_array_GHI_times(local_times):
-        date = list(map(datetime.datetime.utcfromtimestamp, local_times))
-        day_of_year = np.array(list(map(get_day_of_year_map, date)), dtype=np.float64)
-        local_time = np.array(list(map(OpenweatherSolarCalculations._date_convert, date)))
-        return day_of_year, local_time
-
-    @staticmethod
     def _date_convert(date):
         """
 
@@ -310,41 +416,6 @@ class OpenweatherSolarCalculations(BaseSolarCalculations):
         """
 
         return date.hour + (float(date.minute * 60 + date.second) / 3600)
-
-    def calculate_array_GHI(self, coords, time_zones, local_times,
-                            elevations, environment: OpenweatherEnvironment):
-        """
-
-        Calculates the Global Horizontal Irradiance from the Sun, relative to a location
-        on the Earth, for arrays of coordinates, times, elevations and weathers
-        https://www.pveducation.org/pvcdrom/properties-of-sunlight/calculation-of-solar-insolation
-        Note: If local_times and time_zones are both unadjusted for Daylight Savings, the
-                calculation will end up just the same
-
-        :param np.ndarray coords: (float[N][lat, lng]) array of latitudes and longitudes
-        :param np.ndarray time_zones: (int[N]) time zones at different locations in seconds relative to UTC
-        :param np.ndarray local_times: (int[N]) unix time that the vehicle will be at each location. (Adjusted for Daylight Savings)
-        :param np.ndarray elevations: (float[N]) elevation from sea level in m
-        :param OpenweatherEnvironment environment: environment data object
-        :returns: (float[N]) Global Horizontal Irradiance in W/m2
-        :rtype: np.ndarray
-
-        """
-        day_of_year, local_time = core.calculate_array_ghi_times(local_times)
-
-        ghi = self._calculate_GHI(coords[:, 0], coords[:, 1], time_zones,
-                                  day_of_year, local_time, elevations, environment.cloud_cover)
-
-        stationary_irradiance = self._calculate_angled_irradiance(coords[:, 0], coords[:, 1], time_zones, day_of_year,
-                                                                  local_time, elevations, environment.cloud_cover)
-
-        # Use stationary irradiance when the car is not driving
-        effective_irradiance = np.where(
-            np.logical_not(self.race.driving_boolean),
-            stationary_irradiance,
-            ghi)
-
-        return effective_irradiance
 
     def _calculate_angled_irradiance(self, latitude, longitude, time_zone_utc, day_of_year,
                                      local_time, elevation, cloud_cover, array_angles=np.array([0, 15, 30, 45])):
@@ -527,3 +598,4 @@ def compute_elevation_angle_math(declination_angle, hour_angle, latitude):
     elevation_angle = np.arcsin(term_1 + term_2)
 
     return np.degrees(elevation_angle)
+

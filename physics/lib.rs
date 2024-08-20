@@ -7,8 +7,7 @@ use pyo3::types::PyModule;
 pub mod environment;
 pub mod models;
 use crate::environment::gis::gis::rust_closest_gis_indices_loop;
-use crate::environment::solar_calculations::solar_calculations::rust_calculate_array_ghi_times;
-use crate::environment::weather_forecasts::weather_forecasts::{rust_closest_weather_indices_loop, rust_weather_in_time, rust_closest_timestamp_indices};
+use crate::environment::meteorology::meteorology::{rust_calculate_array_ghi_times, rust_closest_weather_indices_loop, rust_weather_in_time, rust_closest_timestamp_indices};
 
 fn constrain_speeds(speed_limits: ArrayViewD<f64>,  speeds: ArrayViewD<f64>, tick: i32) -> Vec<f64> {
     let mut distance: f64 = 0.0;
