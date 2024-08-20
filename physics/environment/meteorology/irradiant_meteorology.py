@@ -36,6 +36,7 @@ class IrradiantMeteorology(BaseMeteorology):
         # reasonable assumption to make for FSGP only.
         if self._race.race_type == Race.FSGP:
             self._weather_indices = np.zeros_like(cumulative_distances, dtype=int)
+            return
 
         # a list of all the coordinates that we have weather data for
         weather_coords = self._raw_weather_data[:, 0, 1:3]
