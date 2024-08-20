@@ -82,7 +82,7 @@ class IrradiantMeteorology(BaseMeteorology):
         self._longitude = forecasts_array[:, 2]
         self._wind_speed = forecasts_array[:, 3]
         self._wind_direction = forecasts_array[:, 4]
-        self._ghi = forecasts_array[:, 5]
+        self._solar_irradiance = forecasts_array[:, 5]
 
     def calculate_solar_irradiances(self, coords, time_zones, local_times, elevations):
         """

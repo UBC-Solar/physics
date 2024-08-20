@@ -1,7 +1,5 @@
 from .environment import (
-    openweather_environment,
-    solcast_environment,
-    weather_forecasts,
+    meteorology,
     gis
 )
 
