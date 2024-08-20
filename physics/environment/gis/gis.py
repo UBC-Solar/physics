@@ -1,86 +1,49 @@
-import os
 import logging
 import math
-import pathlib
-
+import core
 import numpy as np
 import sys
+
 from tqdm import tqdm
 from xml.dom import minidom
-from typing import TypeAlias, Union
 from haversine import haversine, Unit
-
 from physics.environment.gis.base_gis import BaseGIS
-from physics.environment.race import Race
-
-import core
-
-PathLike: TypeAlias = Union[pathlib.Path, str]
 
 
 class GIS(BaseGIS):
-    def __init__(self, origin_coord, dest_coord, waypoints, race_type, route_directory: PathLike, current_coord=None, hash_key=None):
+    def __init__(self, route_data, origin_coord, current_coord=None):
         """
 
         Initialises a GIS (geographic location system) object. This object is responsible for getting the
         simulation's planned route from the Google Maps API and performing operations on the received data.
 
+        Requires a map, ``route_data`` with certain keys.
+            1. "path": an iterable of shape [N, 2] representing N coordinates in the form (latitude, longitude).
+            2. "elevations": an iterable of shape [N] where each Nth element is the elevation, in meters, of the Nth path coordinate.
+            3. "time_zones": an iterable of shape [N] where each Nth element is the UTC time zone offset of the Nth path coordinate.
+            4. "num_unique_coords": the number of unique coordinates (that is, if the path is a single lap that has been tiled, how many path coordinates compose a single lap).
+
+        :param route_data: map of data containing "path", "elevations", "time_zones", and "num_unique_coords".
         :param origin_coord: NumPy array containing the start coordinate (lat, long) of the planned travel route
-        :param dest_coord: NumPy array containing the end coordinate (lat, long) of the planned travel route
-        :param waypoints: NumPy array containing the route waypoints to travel through during simulation
-        :param race_type: String ("FSGP" or "ASC") stating which race is being simulated
-        :param hash_key: key used to identify cached data as valid for a Simulation model
 
         """
-        self.current_index = 0
-        self.distance_remainder = 0
+        self.path = route_data['path']
+        self.launch_point = route_data['path'][0]
+        self.path_elevations = route_data['elevations']
+        self.path_time_zones = route_data['time_zones']
+        self.num_unique_coords = route_data['num_unique_coords']
 
-        self.origin_coord = origin_coord
-        self.dest_coord = dest_coord
-        self.current_coord = current_coord
-        self.waypoints = waypoints
-        self.race_type = race_type
+        if current_coord is not None:
+            if not np.array_equal(current_coord, origin_coord):
+                logging.warning("Current position is not origin position. Modifying path data.\n")
 
-        # path to file storing the route and elevation NumPy arrays
-        if self.race_type == Race.RaceType.FSGP:
-            route_file = route_directory / "route_data_FSGP.npz"
-        else:
-            route_file = route_directory / "route_data.npz"
+                # We need to find the closest coordinate along the path to the vehicle position
+                current_coord_index = GIS._find_closest_coordinate_index(current_coord, self.path)
 
-        # if the file exists, load path from file
-        if os.path.isfile(route_file):
-            with np.load(route_file) as route_data:
-                if route_data['hash'] == hash_key:
-
-                    print("Previous route save file is being used...\n")
-
-                    print("----- Route save file information -----")
-                    for key in route_data:
-                        print(f"> {key}: {route_data[key].shape}")
-
-                    self.path = route_data['path']
-                    self.launch_point = route_data['path'][0]
-                    self.path_elevations = route_data['elevations']
-                    self.path_time_zones = route_data['time_zones']
-                    self.speed_limits = route_data['speed_limits']
-                    self.num_unique_coords = route_data['num_unique_coords']
-
-                    if current_coord is not None:
-                        if not np.array_equal(current_coord, origin_coord):
-                            logging.warning("Current position is not origin position. Modifying path data.\n")
-
-                            # We need to find the closest coordinate along the path to the vehicle position
-                            current_coord_index = GIS._find_closest_coordinate_index(current_coord, self.path)
-
-                            # All coords before the current coordinate should be discarded
-                            self.path = self.path[current_coord_index:]
-                            self.path_elevations = self.path_elevations[current_coord_index:]
-                            self.path_time_zones = self.path_time_zones[current_coord_index:]
-        else:
-            logging.warning("Route save file does not exist.\n")
-            logging.error("Update API cache by calling CacheAPI.py , Exiting simulation...\n")
-
-            exit()
+                # All coords before the current coordinate should be discarded
+                self.path = self.path[current_coord_index:]
+                self.path_elevations = self.path_elevations[current_coord_index:]
+                self.path_time_zones = self.path_time_zones[current_coord_index:]
 
         self.path_distances = calculate_path_distances(self.path)
         self.path_length = np.cumsum(calculate_path_distances(self.path[:self.num_unique_coords]))[-1]
@@ -109,10 +72,10 @@ class GIS(BaseGIS):
         """
 
         Takes in an array of point distances from starting point, returns a list of
-        self.path indices of coordinates which have a distance from the starting point
+        ``self.path`` indices of coordinates which have a distance from the starting point
         closest to the point distances.
 
-        :param np.ndarray cumulative_distances: (float[N]) array of distances, where cumulative_distances[x] > cumulative_distances[x-1]
+        :param np.ndarray distances: (float[N]) array of distances, where cumulative_distances[x] > cumulative_distances[x-1]
         :returns: (float[N]) array of indices of path
         :rtype: np.ndarray
 
