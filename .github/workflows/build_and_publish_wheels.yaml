@@ -11,8 +11,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]  # Build on Linux, macOS, and Windows
-        python-version: [3.7, 3.8, 3.9, 3.10, 3.11, 3.12]  # Target different Python versions
+        os: [macos-latest, windows-latest]  # Build on Linux, macOS, and Windows
+        python-version: [3.9, 3.10, 3.11]  # Target different Python versions
 
     steps:
       - uses: actions/checkout@v2
@@ -23,7 +23,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        run: pip install cibuildwheel==2.x.x  # Install cibuildwheel (you can pin to a specific version)
+        run: pip install cibuildwheel==2.20.0  # Install cibuildwheel (you can pin to a specific version)
 
       - name: Build wheels
         run: cibuildwheel --output-dir dist  # CIBuildWheel builds the wheels and places them in `dist/`
