@@ -16,7 +16,7 @@ print(os.listdir(sys.path[0]))
 project = 'UBC Solar Physics'
 copyright = '2024, UBC Solar'
 author = 'Joshua Riefman'
-release = '0.1.11'
+release = '1.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
