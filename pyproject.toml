@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm", "setuptools-rust"]
+requires = ["setuptools>=64", "setuptools-scm>=8", "setuptools-rust"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -39,7 +39,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 keywords = ["car", "simulation", "solar"]
 license = { file = "LICENSE"}
-version = "1.0.0"
+dynamic = ["version"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Rust",
@@ -78,6 +78,10 @@ dependencies = [
     "urllib3==2.2.2",
     "zipp==3.20.0"
 ]
+
+[tool.setuptools_scm]
+version_file = "physics/__version__.py"
+
 
 [project.urls]
 Homepage = "https://ubcsolar.com"

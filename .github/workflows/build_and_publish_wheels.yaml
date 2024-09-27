@@ -1,14 +1,12 @@
 name: Build and Publish Wheels
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'  # Build on version tags
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
   build_wheels:
-    timeout-minutes: 10
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -54,4 +52,4 @@ jobs:
         run: twine upload dist/*
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
