@@ -46,7 +46,6 @@ jobs:
           CIBW_ARCHS_MACOS: "x86_64 arm64"
 
       - name: Upload wheels to PyPI
-        if: startsWith(github.ref, 'refs/tags')  # Only upload if it's a tagged release
         run: twine upload dist/*
         env:
           TWINE_USERNAME: __token__
