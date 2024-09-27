@@ -27,10 +27,12 @@ jobs:
       - name: Install Rust
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          rustup target add x86_64-apple-darwin
-          source $HOME/.cargo/env
-          rustc --version
-          cargo --version
+          # Ensure that Cargo's bin directory is in PATH
+          echo "$HOME/.cargo/bin" >> $GITHUB_ENV
+          # Add target for cross-compilation
+          rustup target add ${{ matrix.arch }}-apple-darwin || echo "Target already added"
+          rustup target add x86_64-unknown-linux-gnu || echo "Linux target already added"
+          rustup target add x86_64-pc-windows-msvc || echo "Windows target already added"
 
       - name: Install cibuildwheel and dependencies
         run: pip install cibuildwheel setuptools-rust

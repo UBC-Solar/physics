@@ -95,4 +95,5 @@ py-limited-api = "auto"  # Default value, can be omitted
 
 [tool.cibuildwheel]
 archs = "auto"  # Automatically detects architectures (e.g., x86, ARM)
+skip = "pp*"
 
