@@ -62,7 +62,6 @@ dependencies = [
     "keyring==25.3.0",
     "llvmlite==0.43.0",
     "markdown-it-py==3.0.0",
-    "maturin==1.7.0",
     "mdurl==0.1.2",
     "more-itertools==10.4.0",
     "nh3==0.2.18",
@@ -81,7 +80,7 @@ dependencies = [
 ]
 
 [tool.setuptools_scm]
-version_file = "physics/__version__.py"
+version_file = "physics/_version.py"
 
 [project.urls]
 Homepage = "https://ubcsolar.com"

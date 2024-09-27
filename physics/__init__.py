@@ -10,3 +10,5 @@ from .models import (
     motor,
     regen
 )
+
+from ._version import __version__

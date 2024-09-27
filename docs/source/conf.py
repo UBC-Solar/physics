@@ -1,9 +1,5 @@
-import os
-import sys
-sys.path.insert(0, os.path.abspath('../../'))  # Adjust as necessary
-print(sys.path)
-print(os.listdir(os.getcwd()))
-print(os.listdir(sys.path[0]))
+from physics import __version__
+
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -16,7 +12,7 @@ print(os.listdir(sys.path[0]))
 project = 'UBC Solar Physics'
 copyright = '2024, UBC Solar'
 author = 'Joshua Riefman'
-release = '1.0.0'
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

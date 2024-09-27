@@ -163,4 +163,4 @@ cython_debug/
 .idea/
 
 # Setuptools_scm
-physics/__version__.py
+physics/_version.py
