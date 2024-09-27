@@ -50,4 +50,3 @@ tqdm
 urllib3
 zipp
 pydata-sphinx-theme==0.15.4
-ubc-solar-physics==1.0.2
