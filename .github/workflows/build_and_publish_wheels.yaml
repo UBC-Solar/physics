@@ -65,6 +65,7 @@ jobs:
           whoami
           ls -la $HOME/.cargo
           echo $PATH
+          cargo --version
 
 
       # Now, we use cibuildwheel to build all the wheels that we want for the platforms we defined in matrix.os
