@@ -12,7 +12,6 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, windows-latest]  # Linux does not work!
-        python-version: ["3.9", "3.10", "3.11"]  # Target different Python versions
 
     steps:
       - name: Checkout
@@ -22,8 +21,6 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
 
       - name: Install and prepare build dependencies
         run: |
