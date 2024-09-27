@@ -8,10 +8,10 @@ on:
 
 jobs:
   build_wheels:
-    fail-fast: false
     timeout-minutes: 10
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]  # Build on Linux, macOS, and Windows
         python-version: [3.9, 3.10, 3.11]  # Target different Python versions
