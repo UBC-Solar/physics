@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]  # Build on Linux, macOS, and Windows
+        os: [macos-latest, ubuntu-latest]  # Build on Linux, macOS, and Windows
         python-version: [3.9, 3.10, 3.11]  # Target different Python versions
 
     steps:
