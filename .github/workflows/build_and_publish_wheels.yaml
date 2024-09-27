@@ -59,7 +59,13 @@ jobs:
       # Linux-specific dependencies (for musl, if needed)
       - name: Install dependencies on Linux
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
+        run: |
+          sudo apt-get update && sudo apt-get install -y musl-tools
+          source $HOME/.cargo/env
+          whoami
+          ls -la $HOME/.cargo
+          echo $PATH
+
 
       # Now, we use cibuildwheel to build all the wheels that we want for the platforms we defined in matrix.os
       # It will build wheels for Python versions that are allowed based on our pyproject.toml
