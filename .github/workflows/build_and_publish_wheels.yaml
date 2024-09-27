@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]  # Build on Linux, macOS, and Windows
+        os: [macos-latest, windows-latest]  # Linux does not work!
         python-version: ["3.9", "3.10", "3.11"]  # Target different Python versions
 
     steps:
@@ -51,7 +51,6 @@ jobs:
           pip install twine
 
       - name: Upload wheels to PyPI
-        run: pip install twine==5.1.1
         run: twine upload dist/*
         env:
           TWINE_USERNAME: __token__
