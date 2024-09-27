@@ -97,3 +97,7 @@ py-limited-api = "auto"  # Default value, can be omitted
 archs = "auto"  # Automatically detects architectures (e.g., x86, ARM)
 skip = "pp*"
 
+[tool.cibuildwheel.linux]
+before-all = '. "$HOME/.cargo/env"'
+
+
