@@ -1,3 +1,5 @@
+# These tests are required to satisfy STG Specification #2: Physics Publishing
+
 import importlib
 
 

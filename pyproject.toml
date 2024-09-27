@@ -1,3 +1,5 @@
+# This file is maintained according to STG Specification #2: Physics Publishing
+
 [build-system]
 requires = ["setuptools>=64", "setuptools-scm>=8", "setuptools-rust"]
 build-backend = "setuptools.build_meta"
@@ -97,4 +99,4 @@ py-limited-api = "auto"  # Default value, can be omitted
 
 [tool.cibuildwheel]
 archs = "auto"  # Automatically detects architectures (e.g., x86, ARM)
-skip = "pp*"
+skip = "pp*"  # Skip PyPy wheels, meaning only CPython wheels are generated
