@@ -22,6 +22,14 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Install cibuildwheel and dependencies
+        run: pip install cibuildwheel==2.20.0 setuptools-rust
+
+      - name: Verify versioning
+        run: |
+          python -m setuptools_scm
+          git status
+
       - name: Set up Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -34,9 +42,6 @@ jobs:
           rustup target add aarch64-apple-darwin || echo "aarch64-apple-darwin target already added"
           rustup target add x86_64-unknown-linux-gnu || echo "Linux target already added"
           rustup target add x86_64-pc-windows-msvc || echo "Windows target already added"
-
-      - name: Install cibuildwheel and dependencies
-        run: pip install cibuildwheel==2.20.0 setuptools-rust
 
       - name: Build wheels
         run: cibuildwheel --output-dir dist
