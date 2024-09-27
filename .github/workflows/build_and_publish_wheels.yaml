@@ -8,6 +8,7 @@ on:
 
 jobs:
   build_wheels:
+    timeout-minutes: 10
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
