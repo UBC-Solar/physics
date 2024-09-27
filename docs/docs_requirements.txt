@@ -49,4 +49,5 @@ sphinxcontrib-serializinghtml
 tqdm
 urllib3
 zipp
+setuptools_scm
 pydata-sphinx-theme==0.15.4
