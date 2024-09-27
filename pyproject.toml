@@ -74,7 +74,6 @@ dependencies = [
     "rfc3986==2.0.0",
     "rich==13.7.1",
     "tqdm==4.66.5",
-    "twine==5.1.1",
     "urllib3==2.2.2",
     "zipp==3.20.0"
 ]
