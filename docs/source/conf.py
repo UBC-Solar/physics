@@ -1,5 +1,16 @@
-from physics import __version__
+from setuptools_scm import get_version
+from pathlib import Path
+import importlib
 
+# Generate the version file
+version = get_version()
+version_file = Path('physics/_version.py')
+version_file.write_text(f"__version__ = '{version}'\n")
+
+# Dynamically import the version
+importlib.invalidate_caches()
+physics_module = importlib.import_module("physics")
+__version__ = physics_module.__version__
 
 # Configuration file for the Sphinx documentation builder.
 #
