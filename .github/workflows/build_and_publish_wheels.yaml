@@ -74,6 +74,19 @@ jobs:
         run: cibuildwheel --output-dir dist
         env:
           CIBW_ARCHS_MACOS: "x86_64 arm64"  # Make sure both x86_64 and arm64 wheels are built for macOS
+          CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH"'
+          CIBW_ENVIRONMENT_WINDOWS: 'PATH="$UserProfile\.cargo\bin;$PATH"'
+          CIBW_MANYLINUX_X86_64_IMAGE: 'manylinux2014'
+          CIBW_MANYLINUX_I686_IMAGE: 'manylinux2014'
+          CIBW_BEFORE_BUILD: >
+            pip install -U setuptools-rust &&
+            rustup default nightly &&
+            rustup show
+          CIBW_BEFORE_BUILD_LINUX: >
+            pip install -U setuptools-rust &&
+            curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=nightly --profile=minimal -y &&
+            rustup show
+          CIBW_SKIP: '*-win32'
 
       - name: Upload wheels to PyPI
         run: twine upload dist/*
