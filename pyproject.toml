@@ -36,7 +36,7 @@ maintainers = [
 ]
 description = "UBC Solar's Simulation Environment"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 keywords = ["car", "simulation", "solar"]
 license = { file = "LICENSE"}
 dynamic = ["version"]
@@ -81,7 +81,6 @@ dependencies = [
 
 [tool.setuptools_scm]
 version_file = "physics/__version__.py"
-
 
 [project.urls]
 Homepage = "https://ubcsolar.com"
