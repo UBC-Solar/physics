@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false  # Without this, one of the wheels failing for some reason would cancel all of the others.
       matrix:
-        os: [macos-latest, windows-latest]  # Build wheels for macOS and Windows, Linux is currently broken as it fails to find the Rust compiler.
+        os: [macos-latest, windows-latest, ubuntu-latest]  # Build wheels for macOS and Windows, and Linux.
 
     steps:
       - name: Checkout
@@ -54,6 +54,12 @@ jobs:
           rustup target add aarch64-apple-darwin || echo "aarch64-apple-darwin target already added"
           rustup target add x86_64-unknown-linux-gnu || echo "Linux target already added"
           rustup target add x86_64-pc-windows-msvc || echo "Windows target already added"
+        shell: bash
+
+      # Linux-specific dependencies (for musl, if needed)
+      - name: Install dependencies on Linux
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
 
       # Now, we use cibuildwheel to build all the wheels that we want for the platforms we defined in matrix.os
       # It will build wheels for Python versions that are allowed based on our pyproject.toml
