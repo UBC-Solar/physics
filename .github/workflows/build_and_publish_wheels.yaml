@@ -32,7 +32,8 @@ jobs:
 
       - name: Add Rust targets
         run: |
-          rustup target add ${{ matrix.arch }}-apple-darwin || echo "Target already added"
+          rustup target add x86_64-apple-darwin || echo "x86_64-apple-darwin target already added"
+          rustup target add aarch64-apple-darwin || echo "aarch64-apple-darwin target already added"
           rustup target add x86_64-unknown-linux-gnu || echo "Linux target already added"
           rustup target add x86_64-pc-windows-msvc || echo "Windows target already added"
 
