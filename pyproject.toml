@@ -36,7 +36,7 @@ maintainers = [
 ]
 description = "UBC Solar's Simulation Environment"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 keywords = ["car", "simulation", "solar"]
 license = { file = "LICENSE"}
 dynamic = ["version"]
