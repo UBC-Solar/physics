@@ -56,18 +56,6 @@ jobs:
           rustup target add x86_64-pc-windows-msvc || echo "Windows target already added"
         shell: bash
 
-      # Linux-specific dependencies (for musl, if needed)
-      - name: Install dependencies on Linux
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update && sudo apt-get install -y musl-tools
-          source $HOME/.cargo/env
-          whoami
-          ls -la $HOME/.cargo
-          echo $PATH
-          cargo --version
-
-
       # Now, we use cibuildwheel to build all the wheels that we want for the platforms we defined in matrix.os
       # It will build wheels for Python versions that are allowed based on our pyproject.toml
       - name: Build wheels
@@ -76,8 +64,6 @@ jobs:
           CIBW_ARCHS_MACOS: "x86_64 arm64"  # Make sure both x86_64 and arm64 wheels are built for macOS
           CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH"'
           CIBW_ENVIRONMENT_WINDOWS: 'PATH="$UserProfile\.cargo\bin;$PATH"'
-          CIBW_MANYLINUX_X86_64_IMAGE: 'manylinux2014'
-          CIBW_MANYLINUX_I686_IMAGE: 'manylinux2014'
           CIBW_BEFORE_BUILD: >
             pip install -U setuptools-rust &&
             rustup default nightly &&
@@ -86,7 +72,6 @@ jobs:
             pip install -U setuptools-rust &&
             curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=nightly --profile=minimal -y &&
             rustup show
-          CIBW_SKIP: '*-win32'
 
       - name: Upload wheels to PyPI
         run: twine upload dist/*
