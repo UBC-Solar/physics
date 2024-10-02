@@ -1,7 +1,6 @@
 from physics.environment.meteorology.base_meteorology import BaseMeteorology
 from physics.environment.gis.gis import calculate_path_distances
 import numpy as np
-from physics.environment.race import Race
 import core
 from typing import Optional
 
@@ -25,16 +24,18 @@ class IrradiantMeteorology(BaseMeteorology):
 
         super().__init__()
 
-    def spatially_localize(self, cumulative_distances: np.ndarray) -> None:
+    def spatially_localize(self, cumulative_distances: np.ndarray, simplify_weather: bool = False) -> None:
         """
 
         :param np.ndarray cumulative_distances: NumPy Array representing cumulative distances theoretically achievable for a given input speed array
+        :param bool simplify_weather: enable to only use a single weather coordinate (for track races without varying weather)
+
         """
         # if racing FSGP, there is no need for distance calculations. We will return only the origin coordinate
         # This characterizes the weather at every point along the FSGP tracks
         # with the weather at a single coordinate on the track, which is great for reducing the API calls and is a
         # reasonable assumption to make for FSGP only.
-        if self._race.race_type == Race.FSGP:
+        if simplify_weather:
             self._weather_indices = np.zeros_like(cumulative_distances, dtype=int)
             return
 
