@@ -48,7 +48,7 @@ class CloudedMeteorology(BaseMeteorology):
         :param bool simplify_weather: enable to only use a single weather coordinate (for track races without varying weather)
         """
 
-        # if racing FSGP, there is no need for distance calculations. We will return only the origin coordinate
+        # If racing a track race, there is no need for distance calculations. We will return only the origin coordinate
         # This characterizes the weather at every point along the FSGP tracks
         # with the weather at a single coordinate on the track, which is great for reducing the API calls and is a
         # reasonable assumption to make for FSGP only.
