@@ -1,6 +1,6 @@
-from physics.models.battery.kalman_filter import EKF
+from physics.models.battery.kalman_filter import EKF_SOC
 
-Kalman_Filter = EKF(1.0, 0.0)
+Kalman_Filter = EKF_SOC(1.0, 0.0)
 
 def test_SOC_Value():
     SOC = Kalman_Filter.get_SOC()
@@ -37,3 +37,5 @@ def test_update_filter_invalid_arguments():
         Kalman_Filter.update_filter("3.7", 10.0)
     except TypeError as e:
         assert "Invalid type for measured_Ut" in str(e)
+
+

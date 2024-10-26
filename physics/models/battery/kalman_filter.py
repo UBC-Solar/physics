@@ -22,8 +22,8 @@ class EKF_SOC():
         # Creating the SOC derivative curve
         SOC_data = np.array([0.0752, 0.1705, 0.2677, 0.366, 0.4654, 0.5666, 0.6701, 0.7767, 0.8865, 1.0])
         Uoc_data = np.array([3.481, 3.557, 3.597, 3.623, 3.660, 3.750, 3.846, 3.946, 4.056, 4.183])
-        Uoc_coefficients = np.polyfit(SOC_data, Uoc_data, 4)
-        self.Uoc_derivative_coefficients = np.polyder(Uoc_coefficients)
+        self.Uoc_coefficients = np.polyfit(SOC_data, Uoc_data, 6)
+        self.Uoc_derivative_coefficients = np.polyder(self.Uoc_coefficients)
 
         # initializing the ekf object
         self.ekf = EKF(dim_x=2, dim_z=1)
@@ -34,6 +34,9 @@ class EKF_SOC():
 
     def get_SOC_curve_derivative(self, SOC):
         return np.polyval(self.Uoc_derivative_coefficients, SOC)
+    
+    def get_SOC_value(self, SOC):
+        return np.polyval(self.Uoc_coefficients, SOC)
     
     def get_SOC(self): 
         return self.SOC
@@ -73,6 +76,16 @@ class EKF_SOC():
         self.ekf.predict(u=I)
         print(f'ekf prediction: {self.ekf.x_prior}')
 
+    def predict_then_update(self, measured_Ut, I, time_step):
+        self._check_current(I)
+        self._check_Terminal_V(measured_Ut)
+
+        self.predict_state(I, time_step)
+        print(f'predicted: {self.ekf.x_prior}')
+
+        self.update_filter(measured_Ut, I)
+        print(f'SOC: {self.ekf.x[0]}, Uc: {self.ekf.x[1]}')
+
     def state_jacobian(self, time_step):
         return np.array([[1, 0], [0, np.exp(-time_step / self.tau)]])
 
@@ -90,9 +103,53 @@ class EKF_SOC():
 
         print("result: ", derivative * SOC - Uc - self.R_0*I)
         print(f'resistance: {self.R_0}')
-        return derivative * SOC - Uc - self.R_0*I
+        # return derivative * SOC - Uc - self.R_0*I
+        return self.get_SOC_value(SOC) - Uc - self.R_0*I
     
 
 
 
 
+# iterations = 10
+# time_step = 1000
+# test_EKF = EKF_SOC(1, 0)
+# SOCs = np.zeros(iterations)
+# Ucs = np.zeros(iterations)
+# def test():
+#     Ut = 4.183
+#     delta_Ut = 0.15
+#     for i in range(10):
+#         test_EKF.predict_then_update(Ut, 20.0, time_step)
+#         SOCs[i] = test_EKF.get_SOC()
+#         Ucs[i] = test_EKF.get_Uc()
+#         Ut -= delta_Ut
+
+# import matplotlib.pyplot as plt
+
+
+# test()
+
+# # Create a figure and axis
+# fig, ax1 = plt.subplots()
+
+# # Plot SOC on the first y-axis
+# color = 'tab:blue'
+# ax1.set_xlabel('Iteration')
+# ax1.set_ylabel('SOC (State of Charge)', color=color)
+# ax1.plot(np.arange(iterations), SOCs, color=color, marker='o', label='SOC')
+# ax1.tick_params(axis='y', labelcolor=color)
+# ax1.grid(True)
+
+# # Create a second y-axis for Uc on the same x-axis
+# ax2 = ax1.twinx()  # Create a twin Axes sharing the x-axis
+# color = 'tab:green'
+# ax2.set_ylabel('Uc (Polarization Voltage)', color=color)
+# ax2.plot(np.arange(iterations), Ucs, color=color, marker='o', linestyle='--', label='Uc')
+# ax2.tick_params(axis='y', labelcolor=color)
+
+# # Add a title
+# plt.title('SOC and Uc over Iterations')
+
+# # Show the plot
+# plt.tight_layout()  # Adjust layout so labels don't overlap
+# plt.show()
