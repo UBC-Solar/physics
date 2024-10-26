@@ -21,56 +21,70 @@ voltage_array = np.zeros(len(voltage_data))
 current_array = np.zeros(len(voltage_data))
 
 for i in range(1, len(voltage_data)):
-    current_time = voltage_data[i][0]
-    prev_time = current_data[i - 1][0]
-    time_difference = (current_time - prev_time).total_seconds()
+    # Calculate time difference between current and previous measurements
+    time_difference = (voltage_data[i][0] - current_data[i - 1][0]).total_seconds()
     
-    Ut = voltage_data[i][1] / 32 # account for number of cells
+    Ut = voltage_data[i][1] / 32  # Normalize voltage for cell count
     I = current_data[i][1]
-    # print(f'Ut: {Ut}')
-    # print(f'I: {I}')
+    
     ekf.predict_then_update(Ut, I, time_difference)
 
     SOC_array[i] = ekf.get_SOC()
     voltage_array[i] = Ut
-    # current_array[i] = I
+    current_array[i] = I
 
 
+def plot_kalman_results(data_arrays, labels):
+    """
+    Plots multiple data arrays against a common time axis on separate y-axes.
 
+    Parameters:
+    - time_axis: Array of time values
+    - data_arrays: List of data arrays to plot (each array should be of equal length)
+    - labels: List of labels for each data array
+    - colors: List of colors for each data array
 
-def plot_kalman_results(SOC_array, voltage_array, current_array):
+    Example:
+    plot_kalman_results([SOC_array, voltage_array, current_array], 
+                        ["SOC", "Voltage (V)", "Current (A)"], 
+                        ["tab:blue", "tab:red", "tab:green"])
+    """
+
+    print(data_arrays)
+    print(data_arrays[0])
+    print(data_arrays[0])
     time_axis = [entry[0] for entry in voltage_data]
-
-    # Create the plot with multiple y-axes
+    # Predefined color list (10 colors)
+    colors = [
+        "tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple",
+        "tab:brown", "tab:pink", "tab:gray", "tab:olive", "tab:cyan"
+    ]
+    
+    # Ensure input arrays are of the same length
+    if not all(len(arr) == len(time_axis) for arr in data_arrays):
+        raise ValueError("All data arrays must be of the same length as the time axis.")
+    
     fig, ax1 = plt.subplots()
+    ax1.set_xlabel("Time")
+    
+    # Plot each array on a new y-axis
+    for i, (data, label, color) in enumerate(zip(data_arrays, labels, colors)):
+        if i == 0:
+            ax = ax1  # First plot on primary y-axis
+        else:
+            ax = ax1.twinx()  # Subsequent plots on secondary y-axes
+            ax.spines['right'].set_position(('outward', 60 * (i - 1)))
+        
+        ax.set_ylabel(label, color=color)
+        ax.plot(time_axis, data, color=color)
+        ax.tick_params(axis='y', labelcolor=color)
 
-    # Plot SOC on the first y-axis (left)
-    color = 'tab:blue'
-    ax1.set_xlabel('Time')
-    ax1.set_ylabel('SOC', color=color)
-    ax1.plot(time_axis, SOC_array, color=color)
-    ax1.tick_params(axis='y', labelcolor=color)
-
-    # Create a second y-axis for Voltage
-    ax2 = ax1.twinx()
-    color = 'tab:red'
-    ax2.set_ylabel('Voltage (V)', color=color)
-    ax2.plot(time_axis, voltage_array, color=color)
-    ax2.tick_params(axis='y', labelcolor=color)
-
-    # Create a third y-axis for Current
-    ax3 = ax1.twinx()
-    ax3.spines['right'].set_position(('outward', 60))
-    color = 'tab:green'
-    ax3.set_ylabel('Current (A)', color=color)
-    ax3.plot(time_axis, current_array, color=color)
-    ax3.tick_params(axis='y', labelcolor=color)
-
-    # Finalize the layout
-    fig.tight_layout()
-
-    # Show the plot
+    fig.tight_layout()  # Adjust layout to prevent overlap
     plt.show()
 
+# plot_kalman_results(
+#     [SOC_array, voltage_array, current_array], 
+#     ["SOC", "Voltage (V)", "Current (A)"]
+# )
 
-# plot_kalman_results(SOC_array, voltage_array, current_array)
+

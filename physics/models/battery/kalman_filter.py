@@ -11,9 +11,7 @@ class EKF_SOC():
         self.R_covariance = np.eye(1) * 0.001
 
         # HPPC coefficients go here
-        R_0_coefficients = [2.12293662e-08, -5.14521450e-06, 4.68039977e-04, -2.00597542e-02, 2.91277259e+00]
-        # self.R_0 = lambda soc: np.polyval(R_0_coefficients, soc) / 1000     # Ohms
-        self.R_0 = 2.558 / 1000 # ohms
+        R_0_data = np.array([2.564, 2.541, 2.541, 2.558, 2.549, 2.574, 2.596, 2.626, 2.676, 2.789]) / 1000  # In ohms (Ω)
         self.R_P = 0.530 / 1000     # Ohms
         self.C_P = 14646            # F
         self.tau = self.R_P / self.C_P
@@ -23,6 +21,7 @@ class EKF_SOC():
         SOC_data = np.array([0.0752, 0.1705, 0.2677, 0.366, 0.4654, 0.5666, 0.6701, 0.7767, 0.8865, 1.0])
         Uoc_data = np.array([3.481, 3.557, 3.597, 3.623, 3.660, 3.750, 3.846, 3.946, 4.056, 4.183])
         self.Uoc_coefficients = np.polyfit(SOC_data, Uoc_data, 6)
+        self.R_0_coefficients = np.polyfit(SOC_data, R_0_data, 6)
         self.Uoc_derivative_coefficients = np.polyder(self.Uoc_coefficients)
 
         # initializing the ekf object
@@ -37,6 +36,9 @@ class EKF_SOC():
     
     def get_SOC_value(self, SOC):
         return np.polyval(self.Uoc_coefficients, SOC)
+    
+    def get_R_0_value(self, SOC):
+        return np.polyval(self.R_0_coefficients, SOC)
     
     def get_SOC(self): 
         return self.SOC
@@ -100,11 +102,12 @@ class EKF_SOC():
         print("here in measurement function", SOC, Uc)
         # return self.Uoc_derivative_curve(SOC) * SOC - Uc - I*self.R_0(SOC) + self.R_covariance
         derivative = self.get_SOC_curve_derivative(SOC)
+        R_0 = self.get_R_0_value(SOC)
 
-        print("result: ", derivative * SOC - Uc - self.R_0*I)
-        print(f'resistance: {self.R_0}')
+        print("result: ", derivative * SOC - Uc - R_0*I)
+        print(f'resistance: {R_0}')
         # return derivative * SOC - Uc - self.R_0*I
-        return self.get_SOC_value(SOC) - Uc - self.R_0*I
+        return self.get_SOC_value(SOC) - Uc - R_0*I
     
 
 
