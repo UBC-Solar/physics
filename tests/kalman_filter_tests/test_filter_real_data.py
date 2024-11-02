@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from physics.models.battery.kalman_filter import EKF_SOC
+from physics.models.battery.battery_config import BatteryModelConfig, load_battery_config
 import matplotlib.pyplot as plt
 
 
@@ -14,7 +15,9 @@ def csv_to_timeseries_tuples(csv_file):
 voltage_data = csv_to_timeseries_tuples('voltage.csv')
 current_data = csv_to_timeseries_tuples('current.csv')
 
-ekf = EKF_SOC(1, 0)
+
+config: BatteryModelConfig = load_battery_config()
+ekf = EKF_SOC(config, 1, 0)
 
 SOC_array = np.zeros(len(voltage_data))
 Ut_array = np.zeros(len(voltage_data))
@@ -54,7 +57,7 @@ def plot_kalman_results(data_arrays, labels):
                         ["tab:blue", "tab:red", "tab:green"])
     """
     time_axis = [entry[0] for entry in voltage_data]
-    # Predefined color list (10 colors)
+    # Predefined color list
     colors = [
         "tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple",
         "tab:brown", "tab:pink", "tab:gray", "tab:olive", "tab:cyan"
@@ -82,6 +85,8 @@ def plot_kalman_results(data_arrays, labels):
     fig.tight_layout()  # Adjust layout to prevent overlap
     plt.show()
 
+
+# example usage
 plot_kalman_results(
     [SOC_array, Ut_array, predicted_Ut_array], 
     ["SOC", "Measured Terminal Voltage (V)", "Predicted Terminal Voltage (V)"]
