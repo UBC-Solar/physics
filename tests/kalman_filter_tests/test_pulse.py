@@ -4,38 +4,49 @@ from physics.models.battery.kalman_filter import EKF_SOC
 import matplotlib.pyplot as plt
 
 
-# This test requires a voltage.csv and current.csv in the same directory to run
-def csv_to_timeseries_tuples(csv_file):
-    df = pd.read_csv(csv_file)
-    df['Time'] = pd.to_datetime(df['Time'])
-    return np.array(list(zip(df['Time'].dt.to_pydatetime(), df['Value'])))
 
+ekf_full = EKF_SOC(1, 0)
+ekf_depleted = EKF_SOC(0.4, 0)
+time_steps = np.linspace(0, 3610 * 100, 3610 * 100)
 
-voltage_data = csv_to_timeseries_tuples('voltage.csv')
-current_data = csv_to_timeseries_tuples('current.csv')
+current_array = np.zeros(len(time_steps))
+SOC_array_full = np.zeros(len(time_steps))
+Ut_array_full = np.zeros(len(time_steps))
+polarization_voltage_array_full = np.zeros(len(time_steps))
 
-ekf = EKF_SOC(1, 0)
+SOC_array_depeleted = np.zeros(len(time_steps))
+Ut_array_depeleted = np.zeros(len(time_steps))
+polarization_voltage_array_depeleted = np.zeros(len(time_steps))
 
-SOC_array = np.zeros(len(voltage_data))
-Ut_array = np.zeros(len(voltage_data))
-current_array = np.zeros(len(voltage_data))
-polarization_voltage_array = np.zeros(len(voltage_data))
-predicted_Ut_array = np.zeros(len(voltage_data))
-
-for i in range(1, len(voltage_data)):
+for i in range(0, 10 * 100):
     # Calculate time difference between current and previous measurements
-    time_difference = (voltage_data[i][0] - current_data[i - 1][0]).total_seconds()
+    time_difference = 1 / 100 # seconds
     
-    Ut = voltage_data[i][1] / 32  # Normalize voltage for cell count
-    I = current_data[i][1]
+    I = 40.0 # 40 amps discharge
+    Ut = 3.0
     
-    ekf.predict_then_update(Ut, I, time_difference)
+    ekf_full.predict_then_update(Ut, I, time_difference)
+    ekf_depleted.predict_then_update(Ut, I, time_difference)
 
-    SOC_array[i] = ekf.get_SOC()
-    Ut_array[i] = Ut
+    SOC_array_full[i] = ekf_full.get_SOC()
+    SOC_array_depeleted[i] = ekf_depleted.get_SOC()
     current_array[i] = I
-    polarization_voltage_array[i] = ekf.get_Uc()
-    predicted_Ut_array[i] = ekf.get_predicted_Ut()
+
+for i in range(10 * 100, 3610 * 100):
+    # Calculate time difference between current and previous measurements
+    time_difference = 1 / 100 # seconds
+    
+    Ut = 3.0
+    I = 0.0 # 40 amps discharge
+    
+    ekf_full.predict_then_update(Ut, I, time_difference)
+    ekf_depleted.predict_then_update(Ut, I, time_difference)
+
+    SOC_array_full[i] = ekf_full.get_SOC()
+    SOC_array_depeleted[i] = ekf_depleted.get_SOC()
+    Ut_array_depeleted[i] = ekf_depleted.get_predicted_Ut()
+    Ut_array_full[i] = ekf_full.get_predicted_Ut()
+    current_array[i] = I
 
 
 def plot_kalman_results(data_arrays, labels):
@@ -53,7 +64,7 @@ def plot_kalman_results(data_arrays, labels):
                         ["SOC", "Voltage (V)", "Current (A)"], 
                         ["tab:blue", "tab:red", "tab:green"])
     """
-    time_axis = [entry[0] for entry in voltage_data]
+    time_axis = time_steps
     # Predefined color list (10 colors)
     colors = [
         "tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple",
@@ -83,7 +94,8 @@ def plot_kalman_results(data_arrays, labels):
     plt.show()
 
 plot_kalman_results(
-    [SOC_array, Ut_array, predicted_Ut_array], 
-    ["SOC", "Measured Terminal Voltage (V)", "Predicted Terminal Voltage (V)"]
+    [Ut_array_depeleted, Ut_array_full, current_array], 
+    ["SOC depleted", "SOC full", "Current (A)"]
 )
+
 
