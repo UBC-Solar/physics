@@ -80,7 +80,7 @@ dependencies = [
     "filterpy==1.4.5",
     'toml==0.10.2',
     'pandas',
-    
+    "tomli"
 ]
 
 [tool.setuptools_scm]
