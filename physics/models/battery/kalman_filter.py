@@ -4,7 +4,7 @@ from .battery_config import BatteryModelConfig
 import numpy as np
 
 class EKF_SOC():
-    def __init__(self, battery_model_config: BatteryModelConfig,  initial_SOC = 1, initial_Uc = 0):
+    def __init__(self, battery_config: BatteryModelConfig,  initial_SOC = 1, initial_Uc = 0):
         """
         EKF_SOC represents the kalman filter used for predicting state of charge.
 
@@ -21,13 +21,13 @@ class EKF_SOC():
         self.Q_covariance = np.eye(2) * 0.0001
         self.R_covariance = np.eye(1) * 0.5     # currently not really trusting the predicted state
 
-        # Load Config
-        self.R_P = battery_model_config.R_P
-        self.C_P = battery_model_config.C_P
-        self.Q_total = battery_model_config.Q_total
-        SOC_data = np.array(battery_model_config.SOC_data)
-        Uoc_data = np.array(battery_model_config.Uoc_data)
-        R_0_data = np.array(battery_model_config.R_0_data)
+        # Load Config data
+        self.R_P = battery_config.R_P
+        self.C_P = battery_config.C_P
+        self.Q_total = battery_config.Q_total
+        SOC_data = np.array(battery_config.SOC_data)
+        Uoc_data = np.array(battery_config.Uoc_data)
+        R_0_data = np.array(battery_config.R_0_data)
 
         # polynomial interpolation
         self.Uoc_coefficients = np.polyfit(SOC_data, Uoc_data, 7)
