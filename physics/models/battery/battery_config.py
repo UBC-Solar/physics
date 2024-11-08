@@ -1,4 +1,4 @@
-import tomllib
+import tomli
 from pydantic import BaseModel
 from typing import List
 import os
@@ -10,6 +10,8 @@ class BatteryModelConfig(BaseModel):
     Q_total: float
     SOC_data: List[float]
     Uoc_data: List[float]
+    max_current_capacity: float
+    max_energy_capacity: float
 
 def load_battery_config(file_name: str = "battery_config.toml") -> BatteryModelConfig:
 
@@ -20,5 +22,5 @@ def load_battery_config(file_name: str = "battery_config.toml") -> BatteryModelC
     full_path = os.path.join(base_dir, file_name)
 
     with open(full_path, 'rb') as f:
-        data = tomllib.load(f)
+        data = tomli.load(f)
     return BatteryModelConfig.model_validate(data)
