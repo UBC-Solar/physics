@@ -3,11 +3,13 @@ import pandas as pd
 from physics.models.battery.kalman_filter import EKF_SOC
 from physics.models.battery.battery_config import BatteryModelConfig, load_battery_config
 import matplotlib.pyplot as plt
+import pathlib
 
 
 # This test requires a voltage.csv and current.csv in the same directory to run
 def csv_to_timeseries_tuples(csv_file):
-    df = pd.read_csv(csv_file)
+    path = pathlib.Path(__file__).parent / csv_file
+    df = pd.read_csv(path)
     df['Time'] = pd.to_datetime(df['Time'])
     return np.array(list(zip(df['Time'].dt.to_pydatetime(), df['Value'])))
 

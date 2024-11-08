@@ -1,6 +1,8 @@
 from physics.models.battery.kalman_filter import EKF_SOC
+from physics.models.battery.battery_config import BatteryModelConfig, load_battery_config
 
-Kalman_Filter = EKF_SOC(1.0, 0.0)
+config: BatteryModelConfig = load_battery_config()
+Kalman_Filter = EKF_SOC(config, 1.0, 0.0)
 
 def test_SOC_Value():
     SOC = Kalman_Filter.get_SOC()
