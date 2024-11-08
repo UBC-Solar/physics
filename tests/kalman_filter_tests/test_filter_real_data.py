@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
+import pytest
 from physics.models.battery.kalman_filter import EKF_SOC
 from physics.models.battery.battery_config import BatteryModelConfig, load_battery_config
 import matplotlib.pyplot as plt
 import pathlib
+
 
 
 # This test requires a voltage.csv and current.csv in the same directory to run
@@ -12,35 +14,6 @@ def csv_to_timeseries_tuples(csv_file):
     df = pd.read_csv(path)
     df['Time'] = pd.to_datetime(df['Time'])
     return np.array(list(zip(df['Time'].dt.to_pydatetime(), df['Value'])))
-
-
-voltage_data = csv_to_timeseries_tuples('voltage.csv')
-current_data = csv_to_timeseries_tuples('current.csv')
-
-
-config: BatteryModelConfig = load_battery_config()
-ekf = EKF_SOC(config, 1, 0)
-
-SOC_array = np.zeros(len(voltage_data))
-Ut_array = np.zeros(len(voltage_data))
-current_array = np.zeros(len(voltage_data))
-polarization_voltage_array = np.zeros(len(voltage_data))
-predicted_Ut_array = np.zeros(len(voltage_data))
-
-for i in range(1, len(voltage_data)):
-    # Calculate time difference between current and previous measurements
-    time_difference = (voltage_data[i][0] - current_data[i - 1][0]).total_seconds()
-    
-    Ut = voltage_data[i][1] / 32  # Normalize voltage for cell count
-    I = current_data[i][1]
-    
-    ekf.predict_then_update(Ut, I, time_difference)
-
-    SOC_array[i] = ekf.get_SOC()
-    Ut_array[i] = Ut
-    current_array[i] = I
-    polarization_voltage_array[i] = ekf.get_Uc()
-    predicted_Ut_array[i] = ekf.get_predicted_Ut()
 
 
 def plot_kalman_results(data_arrays, labels):
@@ -58,7 +31,7 @@ def plot_kalman_results(data_arrays, labels):
                         ["SOC", "Voltage (V)", "Current (A)"], 
                         ["tab:blue", "tab:red", "tab:green"])
     """
-    time_axis = [entry[0] for entry in voltage_data]
+    time_axis = [entry[0] for entry in data_arrays[0]]
     # Predefined color list
     colors = [
         "tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple",
@@ -88,9 +61,41 @@ def plot_kalman_results(data_arrays, labels):
     plt.show()
 
 
-# example usage
-plot_kalman_results(
-    [SOC_array, Ut_array, predicted_Ut_array], 
-    ["SOC", "Measured Terminal Voltage (V)", "Predicted Terminal Voltage (V)"]
-)
+
+@pytest.make.skip(reason="this isn't a real test and takes quite long")
+def test_kalman_filter():
+    
+    voltage_data = csv_to_timeseries_tuples('voltage.csv')
+    current_data = csv_to_timeseries_tuples('current.csv')
+
+
+    config: BatteryModelConfig = load_battery_config()
+    ekf = EKF_SOC(config, 1, 0)
+
+    SOC_array = np.zeros(len(voltage_data))
+    Ut_array = np.zeros(len(voltage_data))
+    current_array = np.zeros(len(voltage_data))
+    polarization_voltage_array = np.zeros(len(voltage_data))
+    predicted_Ut_array = np.zeros(len(voltage_data))
+
+    for i in range(1, len(voltage_data)):
+        # Calculate time difference between current and previous measurements
+        time_difference = (voltage_data[i][0] - current_data[i - 1][0]).total_seconds()
+        
+        Ut = voltage_data[i][1] / 32  # Normalize voltage for cell count
+        I = current_data[i][1]
+        
+        ekf.predict_then_update(Ut, I, time_difference)
+
+        SOC_array[i] = ekf.get_SOC()
+        Ut_array[i] = Ut
+        current_array[i] = I
+        polarization_voltage_array[i] = ekf.get_Uc()
+        predicted_Ut_array[i] = ekf.get_predicted_Ut()
+
+    # example usage
+    plot_kalman_results(
+        [SOC_array, Ut_array, predicted_Ut_array], 
+        ["SOC", "Measured Terminal Voltage (V)", "Predicted Terminal Voltage (V)"]
+    )
 
