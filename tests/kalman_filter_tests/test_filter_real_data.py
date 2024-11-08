@@ -62,7 +62,7 @@ def plot_kalman_results(data_arrays, labels):
 
 
 
-@pytest.make.skip(reason="this isn't a real test and takes quite long")
+@pytest.mark.skip(reason="this isn't a real test and takes quite long")
 def test_kalman_filter():
     
     voltage_data = csv_to_timeseries_tuples('voltage.csv')
