@@ -2,6 +2,7 @@ import tomli
 from pydantic import BaseModel
 from typing import List
 import os
+import pathlib
 
 class BatteryModelConfig(BaseModel):
     R_0_data: List[float]
@@ -13,14 +14,9 @@ class BatteryModelConfig(BaseModel):
     max_current_capacity: float
     max_energy_capacity: float
 
-def load_battery_config(file_name: str = "battery_config.toml") -> BatteryModelConfig:
-
-     # Get the directory where this file is located
-    base_dir = os.path.dirname(__file__)
-
+def load_battery_config(absolute_path: str) -> BatteryModelConfig:
     # Build the full path to the config file
-    full_path = os.path.join(base_dir, file_name)
-
+    full_path = pathlib.Path(absolute_path)
     with open(full_path, 'rb') as f:
         data = tomli.load(f)
     return BatteryModelConfig.model_validate(data)
