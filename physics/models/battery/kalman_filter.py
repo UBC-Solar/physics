@@ -15,9 +15,7 @@ class EKF_SOC():
         """
         # Inital state
         self.SOC = initial_SOC
-        self.Uc = initial_Uc  # Polarization Volatge
-
-        
+        self.Uc = initial_Uc  # Polarization Volatge        
 
         # Covariance Matrices
         self.Q_covariance = np.eye(2) * 0.0001
@@ -31,12 +29,10 @@ class EKF_SOC():
         Uoc_data = battery_config.Uoc_data
         R_0_data = battery_config.R_0_data
 
+        # polynomial interpolation
         def quintic_polynomial(x, x0, x1, x2, x3, x4):
             """Quintic polynomial function."""
             return np.polyval([x0, x1, x2, x3, x4], x)
-        
-
-        # polynomial interpolation
 
         U_oc_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, Uoc_data)
         R_0_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, R_0_data)
