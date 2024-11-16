@@ -81,6 +81,7 @@ dependencies = [
     'toml==0.10.2',
     'pandas',
     "pydantic==2.9.2",
+    "scipy",
     "tomli"
 ]
 
