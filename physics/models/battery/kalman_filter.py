@@ -1,7 +1,7 @@
 import numpy as np
+from scipy import optimize
 from filterpy.kalman import ExtendedKalmanFilter as EKF
 from .battery_config import BatteryModelConfig
-import numpy as np
 
 class EKF_SOC():
     def __init__(self, battery_config: BatteryModelConfig,  initial_SOC = 1, initial_Uc = 0):
@@ -17,6 +17,8 @@ class EKF_SOC():
         self.SOC = initial_SOC
         self.Uc = initial_Uc  # Polarization Volatge
 
+        
+
         # Covariance Matrices
         self.Q_covariance = np.eye(2) * 0.0001
         self.R_covariance = np.eye(1) * 0.5     # currently not really trusting the predicted state
@@ -25,14 +27,22 @@ class EKF_SOC():
         self.R_P = battery_config.R_P
         self.C_P = battery_config.C_P
         self.Q_total = battery_config.Q_total
-        SOC_data = np.array(battery_config.SOC_data)
-        Uoc_data = np.array(battery_config.Uoc_data)
-        R_0_data = np.array(battery_config.R_0_data)
+        SOC_data = battery_config.SOC_data
+        Uoc_data = battery_config.Uoc_data
+        R_0_data = battery_config.R_0_data
+
+        def quintic_polynomial(x, x0, x1, x2, x3, x4):
+            """Quintic polynomial function."""
+            return np.polyval([x0, x1, x2, x3, x4], x)
+        
 
         # polynomial interpolation
-        self.Uoc_coefficients = np.polyfit(SOC_data, Uoc_data, 7)
-        self.R_0_coefficients = np.polyfit(SOC_data, R_0_data, 7)
-        self.Uoc_derivative_coefficients = np.polyder(self.Uoc_coefficients)
+
+        U_oc_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, Uoc_data)
+        R_0_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, R_0_data)
+        self.U_oc = lambda soc: np.polyval(U_oc_coefficients, soc)  # Open-circuit voltage as a function of SOC
+        self.R_0 = lambda soc: np.polyval(R_0_coefficients, soc)    # Resistance as a function of SOC
+        self.Uoc_derivative = lambda soc: np.polyval(np.polyder(U_oc_coefficients), soc) # Derivative of Uoc wrt SOC
 
         self.tau = self.R_P / self.C_P
 
@@ -130,7 +140,7 @@ class EKF_SOC():
             x [float, float]: The state vector [SOC, Uc], where both values are floats or integers.
         """
         SOC = x[0]
-        derivative = np.polyval(self.Uoc_derivative_coefficients, SOC)
+        derivative = self.Uoc_derivative(SOC)
         return np.array([[derivative, -1]])
 
     def _measurement_function(self, x, I):
@@ -142,8 +152,8 @@ class EKF_SOC():
             I (float/integer): The current being sourced by the battery. Positive indicated current being drawn.
         """
         SOC, Uc = x
-        R_0 = np.polyval(self.R_0_coefficients, SOC)
-        Uoc = np.polyval(self.Uoc_coefficients, SOC)
+        R_0 = self.R_0(SOC)
+        Uoc = self.U_oc(SOC)
         self.predicted_measurment = Uoc - Uc - R_0*I
         return self.predicted_measurment
 

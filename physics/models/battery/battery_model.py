@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import optimize
 from .battery_config import BatteryModelConfig
 
 
@@ -7,7 +8,7 @@ class BatteryModel:
     """
     Class representing the Thevenin equivalent battery model with modular parameters
 
-    Attributes:
+  ß  Attributes:
         max_voltage (float): maximum voltage of the BrightSide battery pack (V)
         min_voltage (float): minimum voltage of the BrightSide battery pack (V)
         max_current_capacity (float): nominal capacity of the BrightSide battery pack (Ah)
@@ -34,14 +35,20 @@ class BatteryModel:
         self.max_current_capacity = battery_config.max_current_capacity
         self.max_energy_capacity = battery_config.max_energy_capacity
         self.nominal_charge_capacity = battery_config.Q_total
-        U_oc_coefficients = np.array(battery_config.Uoc_data)
-        R_0_coefficients = np.array(battery_config.R_0_data)
+        Soc_data = battery_config.SOC_data
+        Uoc_data = battery_config.Uoc_data
+        R_0_data = battery_config.R_0_data
+
 
         
         # ----- Initialize Parameters -----
-
+        def quintic_polynomial(x, x0, x1, x2, x3, x4):
+            return np.polyval(np.array([x0, x1, x2, x3, x4]), x)
+        
+        U_oc_coefficients, _ = optimize.curve_fit(quintic_polynomial, Soc_data, Uoc_data)
+        R_0_coefficients, _ = optimize.curve_fit(quintic_polynomial, Soc_data, R_0_data)
         self.U_oc = lambda soc: np.polyval(U_oc_coefficients, soc)          # V
-        self.R_0 = lambda soc: np.polyval(R_0_coefficients, soc) / 1000     # Ohms
+        self.R_0 = lambda soc: np.polyval(R_0_coefficients, soc)            # Ohms
 
         self.U_P = 0.0              # V
         self.U_L = 0.0              # V
