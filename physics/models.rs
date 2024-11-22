@@ -1,5 +1,5 @@
 mod arrays;
-mod battery;
+pub mod battery;
 mod lvs;
 mod motor;
 mod regen;
