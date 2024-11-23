@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     power_array = np.tile(hppc_pulse, 10)
 
-    soc, voltage = battery_model.update_array(power_array, 1.0, rust=False)
+    soc, voltage = battery_model.update_array(power_array, 1.0, rust=True)
 
     fig, ax = plt.subplots()
 
