@@ -28,7 +28,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Function call
-    soc, voltage = battery_model.update_array(power_array, 1.0, rust=False)
+    soc, voltage = battery_model.update_array(power_array, 1.0, rust=True)
 
     # End the timer
     end_time = time.time()
