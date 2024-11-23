@@ -3,7 +3,6 @@ use numpy::ndarray::ArrayViewD;
 
 /// Evaluate a polynomial given coefficients and an input value (x)
 fn evaluate_polynomial(coefficients: &[f64], x: f64) -> f64 {
-    // Python's polyval provides coefficients in the opposite order as the rust funciton expects
     coefficients.iter().fold(0.0, |acc, &coeff| acc * x + coeff)
 }
 
