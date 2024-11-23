@@ -4,7 +4,6 @@ from scipy import optimize
 from physics.models.battery.battery_config import BatteryModelConfig
 
 
-
 class BatteryModel:
     """
     Class representing the Thevenin equivalent battery model with modular parameters.
@@ -39,7 +38,7 @@ class BatteryModel:
             Performs array-based energy calculations using Python (fallback for when Rust is disabled).
     """
 
-    def __init__(self, battery_config: BatteryModelConfig, state_of_charge = 1):
+    def __init__(self, battery_config: BatteryModelConfig, state_of_charge=1):
 
         """
         Constructor for the BatteryModel class.
@@ -60,27 +59,26 @@ class BatteryModel:
         Uoc_data = battery_config.Uoc_data
         R_0_data = battery_config.R_0_data
 
-
-        
         # ----- Initialize Parameters -----
         def quintic_polynomial(x, x0, x1, x2, x3, x4):
             return np.polyval(np.array([x0, x1, x2, x3, x4]), x)
-        
+
         self.U_oc_coefficients, _ = optimize.curve_fit(quintic_polynomial, Soc_data, Uoc_data)
         self.R_0_coefficients, _ = optimize.curve_fit(quintic_polynomial, Soc_data, R_0_data)
-        self.U_oc = lambda soc: np.polyval(self.U_oc_coefficients, soc)          # V
-        self.R_0 = lambda soc: np.polyval(self.R_0_coefficients, soc)            # Ohms
+        self.U_oc = lambda soc: np.polyval(self.U_oc_coefficients, soc)  # V
+        self.R_0 = lambda soc: np.polyval(self.R_0_coefficients, soc)  # Ohms
 
-        self.U_P = 0.0              # V
-        self.U_L = 0.0              # V
+        self.U_P = 0.0  # V
+        self.U_L = 0.0  # V
         self.state_of_charge = state_of_charge
 
-        self.tau = self.R_P * self.C_P             # Characteristic Time (seconds)
+        self.tau = self.R_P * self.C_P  # Characteristic Time (seconds)
 
         # calculated the charging and discharging currents
-        self.discharge_current = lambda P, U_oc, U_P, R_0: ((U_oc - U_P) - np.sqrt(np.power((U_oc - U_P), 2) - 4 * R_0 * P)) / (2 * R_0)
-        self.charge_current = lambda P, U_oc, U_P, R_0: (-(U_oc + U_P) + np.sqrt(np.power((U_oc + U_P), 2) + 4 * R_0 * P)) / (2 * R_0)
-
+        self.discharge_current = lambda P, U_oc, U_P, R_0: ((U_oc - U_P) - np.sqrt(
+            np.power((U_oc - U_P), 2) - 4 * R_0 * P)) / (2 * R_0)
+        self.charge_current = lambda P, U_oc, U_P, R_0: (-(U_oc + U_P) + np.sqrt(
+            np.power((U_oc + U_P), 2) + 4 * R_0 * P)) / (2 * R_0)
 
     def _evolve(self, power: float, tick: float):
         """
@@ -95,15 +93,16 @@ class BatteryModel:
             U_P (float): Updated polarization potential (V).
             U_L (float): Updated terminal voltage (V).
         """
-        soc = self.state_of_charge          # State of Charge (dimensionless, 0 < soc < 1)
-        U_P = self.U_P                      # Polarization Potential (V)
-        R_P = self.R_P                      # Polarization Resistance (Ohms)
-        U_oc = self.U_oc(soc)               # Open-Circuit Potential (V)
-        R_0 = self.R_0(soc)                 # Ohmic Resistance (Ohms)
-        Q = self.nominal_charge_capacity    # Nominal Charge Capacity (C)
+        soc = self.state_of_charge        # State of Charge (dimensionless, 0 < soc < 1)
+        U_P = self.U_P                    # Polarization Potential (V)
+        R_P = self.R_P                    # Polarization Resistance (Ohms)
+        U_oc = self.U_oc(soc)             # Open-Circuit Potential (V)
+        R_0 = self.R_0(soc)               # Ohmic Resistance (Ohms)
+        Q = self.nominal_charge_capacity  # Nominal Charge Capacity (C)
        
 
-        I = self.discharge_current(power, U_oc, U_P, R_0) if power <= 0 else self.charge_current(power, U_oc, U_P, R_0)  # Current (A)
+        I = self.discharge_current(power, U_oc, U_P, R_0) if power <= 0 else self.charge_current(power, U_oc, U_P,
+                                                                                                 R_0)  # Current (A)
 
         new_soc = soc + (I * tick / Q)
         new_U_P = np.exp(-tick / self.tau) * U_P + I * R_P * (1 - np.exp(-tick / self.tau))
@@ -127,24 +126,23 @@ class BatteryModel:
                 - soc_array (np.ndarray): Array of state-of-charge values at each time step.
                 - voltage_array (np.ndarray): Array of voltage values at each time step.
         """
-        
+
         if rust:
             print("Using Rust")
             return core.update_battery_array(
-                delta_energy_array, 
-                tick, 
-                self.state_of_charge, 
-                self.U_P, 
-                self.R_P, 
-                self.R_0_coefficients, 
-                self.U_oc_coefficients, 
-                self.tau, 
+                delta_energy_array,
+                tick,
+                self.state_of_charge,
+                self.U_P,
+                self.R_P,
+                self.R_0_coefficients,
+                self.U_oc_coefficients,
+                self.tau,
                 self.nominal_charge_capacity
             )
         else:
             print("Using Python")
             return self._update_array_py(delta_energy_array, tick)
-        
 
     def _update_array_py(self, delta_energy_array, tick):
         """
