@@ -8,7 +8,7 @@ pub mod environment;
 pub mod models;
 use crate::environment::gis::gis::rust_closest_gis_indices_loop;
 use crate::environment::meteorology::meteorology::{rust_calculate_array_ghi_times, rust_closest_weather_indices_loop, rust_weather_in_time, rust_closest_timestamp_indices};
-use crate::models::battery::battery::rust_update_battery_array;
+use crate::models::battery::battery::update_battery_array;
 
 fn constrain_speeds(speed_limits: ArrayViewD<f64>,  speeds: ArrayViewD<f64>, tick: i32) -> Vec<f64> {
     let mut distance: f64 = 0.0;
@@ -112,7 +112,7 @@ fn rust_simulation(_py: Python, m: &PyModule) -> PyResult<()> {
         let delta_energy_array = python_delta_energy_array.as_array();
         let internal_resistance_coeffs = python_internal_resistance_coeffs.as_array();
         let open_circuit_voltage_coeffs = python_open_circuit_voltage_coeffs.as_array();
-        let (soc_array, voltage_array): (Vec<f64>, Vec<f64>) = rust_update_battery_array(
+        let (soc_array, voltage_array): (Vec<f64>, Vec<f64>) = update_battery_array(
             delta_energy_array,
             time_step,
             initial_state_of_charge,
