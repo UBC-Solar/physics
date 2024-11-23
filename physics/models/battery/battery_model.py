@@ -1,3 +1,4 @@
+
 import numpy as np
 import core
 from scipy import optimize
@@ -22,30 +23,14 @@ class BatteryModel:
         U_P (float): Current polarization potential (V).
         U_L (float): Current terminal voltage (V).
         tau (float): Time constant of the battery model (seconds).
-
-    Methods:
-        __init__(battery_config, state_of_charge):
-            Initializes the battery model with configuration parameters and initial state of charge.
-        
-        _evolve(power, T):
-            Updates the battery's state of charge, polarization potential, and terminal voltage
-            based on power input and elapsed time.
-
-        update_array(delta_energy_array, tick, rust=True):
-            Computes the battery's state of charge and voltage over time using an array of energy changes.
-
-        _update_array_py(delta_energy_array, tick):
-            Performs array-based energy calculations using Python (fallback for when Rust is disabled).
     """
 
-    def __init__(self, battery_config: BatteryModelConfig, state_of_charge=1):
-
+    def __init__(self, battery_config: BatteryModelConfig, state_of_charge = 1):
         """
         Constructor for the BatteryModel class.
 
-        Parameters:
-            battery_config (BatteryModelConfig): Configuration object containing the battery's parameters and data.
-            state_of_charge (float): Initial state of charge of the battery (default is 1.0, fully charged).
+        :param BatteryModelConfig battery_config: Configuration object containing the battery's parameters and data.
+        :param float state_of_charge: Initial state of charge of the battery (default is 1.0, fully charged).
         """
 
         # ----- Load Config -----
@@ -82,16 +67,13 @@ class BatteryModel:
 
     def _evolve(self, power: float, tick: float):
         """
-        Updates the battery state given the power and time elapsed.
+        Update the battery state given the power and time elapsed.
 
-        Parameters:
-            power (float): Power applied to the battery (W). Positive for charging, negative for discharging.
-            tick (float): Time interval over which the power is applied (seconds).
+        :param float power: Power applied to the battery (W). Positive for charging, negative for discharging.
+        :param float T: Time interval over which the power is applied (seconds).
 
-        Updates:
-            state_of_charge (float): New state of charge after applying the power.
-            U_P (float): Updated polarization potential (V).
-            U_L (float): Updated terminal voltage (V).
+        :return: None
+        :rtype: None
         """
         soc = self.state_of_charge        # State of Charge (dimensionless, 0 < soc < 1)
         U_P = self.U_P                    # Polarization Potential (V)
@@ -113,18 +95,15 @@ class BatteryModel:
 
     def update_array(self, delta_energy_array, tick, rust=True):
         """
-        Computes the battery's state of charge, voltage, and stored energy over time.
+        Compute the battery's state of charge, voltage, and stored energy over time.
         This function is a wrapper for the Rust-based and Python-based implementations.
 
-        Parameters:
-            delta_energy_array (np.ndarray): Array of energy changes (J) at each time step.
-            tick (float): Time interval for each step (seconds).
-            rust (bool): If True, use Rust-based calculations (default is True).
+        :param np.ndarray delta_energy_array: Array of energy changes (J) at each time step.
+        :param float tick: Time interval for each step (seconds).
+        :param bool rust: If True, use Rust-based calculations (default is True).
 
-        Returns:
-            tuple:
-                - soc_array (np.ndarray): Array of state-of-charge values at each time step.
-                - voltage_array (np.ndarray): Array of voltage values at each time step.
+        :return: A tuple containing arrays for state-of-charge, voltage, and stored energy.
+        :rtype: tuple[np.ndarray, np.ndarray, np.ndarray]
         """
 
         if rust:
@@ -146,16 +125,13 @@ class BatteryModel:
 
     def _update_array_py(self, delta_energy_array, tick):
         """
-        Performs energy calculations using Python (fallback method if Rust is disabled).
+        Perform energy calculations using Python (fallback method if Rust is disabled).
 
-        Parameters:
-            delta_energy_array (np.ndarray): Array of energy changes (J) at each time step.
-            tick (float): Time interval for each step (seconds).
+        :param np.ndarray delta_energy_array: Array of energy changes (J) at each time step.
+        :param float tick: Time interval for each step (seconds).
 
-        Returns:
-            tuple:
-                - soc_array (np.ndarray): Array of state-of-charge values at each time step.
-                - voltage_array (np.ndarray): Array of voltage values at each time step.
+        :return: A tuple containing arrays for state-of-charge and voltage.
+        :rtype: tuple[np.ndarray, np.ndarray]
         """
         soc = np.empty_like(delta_energy_array, dtype=float)
         voltage = np.empty_like(delta_energy_array, dtype=float)
