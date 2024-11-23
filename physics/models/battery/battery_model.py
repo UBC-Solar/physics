@@ -1,4 +1,3 @@
-import core.core
 import numpy as np
 import core
 from scipy import optimize
