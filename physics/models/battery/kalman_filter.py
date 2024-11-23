@@ -48,7 +48,7 @@ class EKF_SOC:
         self.ekf.R = self.R_covariance
 
         # For logs
-        self.predicted_measurment = 0
+        self.predicted_measurement = 0
     
     def get_SOC(self): 
         """
@@ -75,7 +75,7 @@ class EKF_SOC:
         :return: The predicted terminal voltage.
         :rtype: float
         """
-        return self.predicted_measurment
+        return self.predicted_measurement
         
     def update_filter(self, measured_Ut, I):
         """
