@@ -7,12 +7,11 @@ from physics.models.battery.battery_config import BatteryModelConfig
 class EKF_SOC:
     def __init__(self, battery_config: BatteryModelConfig, initial_SOC=1, initial_Uc=0):
         """
-        EKF_SOC represents the kalman filter used for predicting state of charge.
+        EKF_SOC represents the Kalman filter used for predicting state of charge.
 
-        Attributes:
-            battery_config (BatteryModelConfig): This contains the HPPC parameters of the battery model
-            initial_SOC (float/int): Ranges from 0 to 1 inclusive. The initial state of charge of the battery.
-            initial_Uc (float/int):  The initial polarization voltage of the battery. (V)
+        :param BatteryModelConfig battery_config: Contains the HPPC parameters of the battery model.
+        :param float initial_SOC: Initial state of charge of the battery (ranges from 0 to 1 inclusive, default is 1).
+        :param float initial_Uc: Initial polarization voltage of the battery in volts (default is 0).
         """
         # Initial state
         self.SOC = initial_SOC
@@ -30,9 +29,7 @@ class EKF_SOC:
         Uoc_data = battery_config.Uoc_data
         R_0_data = battery_config.R_0_data
 
-        # polynomial interpolation
         def quintic_polynomial(x, x0, x1, x2, x3, x4):
-            """Quintic polynomial function."""
             return np.polyval([x0, x1, x2, x3, x4], x)
 
         U_oc_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, Uoc_data)
@@ -51,28 +48,42 @@ class EKF_SOC:
         self.ekf.R = self.R_covariance
 
         # For logs
-        self.predicted_measurement = 0
+        self.predicted_measurment = 0
+    
+    def get_SOC(self): 
+        """
+        Return the current state of charge of the battery.
 
-    def get_SOC(self):
-        """ Return the state of charge of the battery """
+        :return: The current state of charge.
+        :rtype: float
+        """
         return self.SOC
 
     def get_Uc(self):
-        """ Return the polarization voltage of the battery """
+        """
+        Return the polarization voltage of the battery.
+
+        :return: The current polarization voltage.
+        :rtype: float
+        """
         return self.Uc
 
     def get_predicted_Ut(self):
-        """ Return the predicted terminal voltage for the last prediction step """
-        return self.predicted_measurement
+        """
+        Return the predicted terminal voltage for the last prediction step.
 
+        :return: The predicted terminal voltage.
+        :rtype: float
+        """
+        return self.predicted_measurment
+        
     def update_filter(self, measured_Ut, I):
         """
-        Update the filter based on a new measurement, and the predicted state.
-        This function should be called after predict_state in a typical predict update workflow.
+        Update the filter based on a new measurement and the predicted state.
+        This function should be called after `predict_state` in a typical predict-update workflow.
 
-        Attributes:
-            measured_Ut (float/integer): The actual voltage across the terminals of the battery.
-            I (float/integer): The current being sourced by the battery
+        :param float measured_Ut: The actual voltage across the terminals of the battery.
+        :param float I: The current being sourced by the battery.
         """
         check_Terminal_V(measured_Ut)
 
@@ -85,13 +96,12 @@ class EKF_SOC:
 
     def predict_state(self, I, time_step):
         """
-        Predicts the next evolution of the state vector (SOC, Uc).
-        This function should be called before updating the filter in a typical predict update workflow.
+        Predict the next evolution of the state vector (SOC, Uc).
+        This function should be called before updating the filter in a typical predict-update workflow.
 
-        Attributes:
-            I (float/integer): The current being sourced by the battery. Positive indicated current being drawn.
-            time_step (float/integer): Time elapsed between this prediction and the last updated state of filter. (Seconds)
-        """
+        :param float I: The current being sourced by the battery. Positive indicates current being drawn.
+        :param float time_step: Time elapsed between this prediction and the last updated state of the filter (seconds).
+        """       
         check_current(I)
         # Control matrix B (for input current I_k)
         self.ekf.B = np.array([-time_step / self.Q_total, self.R_P * (1 - np.exp(-time_step / self.tau))])
@@ -102,14 +112,12 @@ class EKF_SOC:
 
     def predict_then_update(self, measured_Ut, I, time_step):
         """
-        Predicts the next evolution of the state vector (SOC, Uc), then updates the filter
-        based on this prediction and a measurement.
-        This function abstracts the full predict update workflow of the EKF. 
+        Predict the next evolution of the state vector (SOC, Uc), then update the filter
+        based on this prediction and a measurement. Abstracts the full predict-update workflow of the EKF.
 
-        Attributes:
-            measured_Ut (float/integer): The actual voltage across the terminals of the battery.
-            I (float/integer): The current being sourced by the battery. Positive indicated current being drawn.
-            time_step (float/integer): Time elapsed between this prediction and the last updated state of filter. (Seconds)
+        :param float measured_Ut: The actual voltage across the terminals of the battery.
+        :param float I: The current being sourced by the battery. Positive indicates current being drawn.
+        :param float time_step: Time elapsed between this prediction and the last updated state of the filter (seconds).
         """
         check_current(I)
         check_Terminal_V(measured_Ut)
@@ -121,20 +129,22 @@ class EKF_SOC:
         print(f'SOC: {self.ekf.x[0]}, Uc: {self.ekf.x[1]}')
 
     def _state_jacobian(self, time_step):
-        """ 
-        Returns the state jacobian for the current time 
+        """
+        Return the state Jacobian matrix for the current time step.
 
-        Attributes:
-            time_step (float/integer): Time elapsed between this prediction and the last updated state of filter. (Seconds)
+        :param float time_step: Time elapsed between this prediction and the last updated state of the filter (seconds).
+        :return: The state Jacobian matrix.
+        :rtype: np.ndarray
         """
         return np.array([[1, 0], [0, np.exp(-time_step / self.tau)]])
 
     def _measurement_jacobian(self, x):
-        """ 
-        Returns the measurement jacobian for the current time 
+        """
+        Return the measurement Jacobian matrix for the current state vector.
 
-        Attributes:
-            x [float, float]: The state vector [SOC, Uc], where both values are floats or integers.
+        :param list[float, float] x: The state vector [SOC, Uc].
+        :return: The measurement Jacobian matrix.
+        :rtype: np.ndarray
         """
         SOC = x[0]
         derivative = self.Uoc_derivative(SOC)
@@ -142,11 +152,12 @@ class EKF_SOC:
 
     def _measurement_function(self, x, I):
         """
-        The customized measurement equation relating Ut to SOC and Uc
+        Return the measurement function relating terminal voltage to SOC and polarization voltage.
 
-        Attributes:
-            x [float, float]: The state vector [SOC, Uc], where both values are floats or integers.
-            I (float/integer): The current being sourced by the battery. Positive indicated current being drawn.
+        :param list[float, float] x: The state vector [SOC, Uc].
+        :param float I: The current being sourced by the battery.
+        :return: The predicted terminal voltage.
+        :rtype: float
         """
         SOC, Uc = x
         R_0 = self.R_0(SOC)

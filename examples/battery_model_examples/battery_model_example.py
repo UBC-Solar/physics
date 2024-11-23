@@ -3,10 +3,11 @@ from physics.models.battery.battery_model import BatteryModel
 import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 
 if __name__ == "__main__":
-    config_file = pathlib.Path(__file__).parent / "battery_config.toml"
+    config_file:BatteryModelConfig = pathlib.Path(__file__).parent / "battery_config.toml"
     battery_config = load_battery_config(str(config_file))
 
     battery_model = BatteryModel(battery_config)
@@ -23,7 +24,17 @@ if __name__ == "__main__":
 
     power_array = np.tile(hppc_pulse, 10)
 
-    soc, voltage = battery_model.update_array(power_array, 1.0, rust=True)
+    # Start the timer
+    start_time = time.time()
+
+    # Function call
+    soc, voltage = battery_model.update_array(power_array, 1.0, rust=False)
+
+    # End the timer
+    end_time = time.time()
+
+    # Calculate and print the duration
+    print(f"The function call took {end_time - start_time:.6f} seconds.")
 
     fig, ax = plt.subplots()
 
