@@ -7,7 +7,6 @@ from .battery_config import BatteryModelConfig, load_battery_config
 __all__ = [
     "BaseBattery",
     "BasicBattery",
-    "battery",
     "BatteryModel",
     "EKF_SOC",
     "BatteryModelConfig",

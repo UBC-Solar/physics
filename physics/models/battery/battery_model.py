@@ -10,7 +10,7 @@ class BatteryModel:
     """
     Class representing the Thevenin equivalent battery model with modular parameters
 
-  ß  Attributes:
+    Attributes:
         max_voltage (float): maximum voltage of the BrightSide battery pack (V)
         min_voltage (float): minimum voltage of the BrightSide battery pack (V)
         max_current_capacity (float): nominal capacity of the BrightSide battery pack (Ah)
