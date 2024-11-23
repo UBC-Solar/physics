@@ -1,4 +1,3 @@
-
 import numpy as np
 import core
 from scipy import optimize
@@ -25,7 +24,7 @@ class BatteryModel:
         tau (float): Time constant of the battery model (seconds).
     """
 
-    def __init__(self, battery_config: BatteryModelConfig, state_of_charge = 1):
+    def __init__(self, battery_config: BatteryModelConfig, state_of_charge=1):
         """
         Constructor for the BatteryModel class.
 
@@ -65,33 +64,28 @@ class BatteryModel:
         self.charge_current = lambda P, U_oc, U_P, R_0: (-(U_oc + U_P) + np.sqrt(
             np.power((U_oc + U_P), 2) + 4 * R_0 * P)) / (2 * R_0)
 
-    def _evolve(self, power: float, tick: float):
+    def _evolve(self, power: float, tick: float) -> None:
         """
         Update the battery state given the power and time elapsed.
 
         :param float power: Power applied to the battery (W). Positive for charging, negative for discharging.
         :param float T: Time interval over which the power is applied (seconds).
-
-        :return: None
-        :rtype: None
         """
-        soc = self.state_of_charge        # State of Charge (dimensionless, 0 < soc < 1)
-        U_P = self.U_P                    # Polarization Potential (V)
-        R_P = self.R_P                    # Polarization Resistance (Ohms)
-        U_oc = self.U_oc(soc)             # Open-Circuit Potential (V)
-        R_0 = self.R_0(soc)               # Ohmic Resistance (Ohms)
+        soc = self.state_of_charge  # State of Charge (dimensionless, 0 < soc < 1)
+        U_P = self.U_P  # Polarization Potential (V)
+        R_P = self.R_P  # Polarization Resistance (Ohms)
+        U_oc = self.U_oc(soc)  # Open-Circuit Potential (V)
+        R_0 = self.R_0(soc)  # Ohmic Resistance (Ohms)
         Q = self.nominal_charge_capacity  # Nominal Charge Capacity (C)
-       
 
-        I = self.discharge_current(power, U_oc, U_P, R_0) if power <= 0 else self.charge_current(power, U_oc, U_P,
-                                                                                                 R_0)  # Current (A)
+        current = self.discharge_current(power, U_oc, U_P, R_0) if power <= 0 else self.charge_current(power, U_oc, U_P, R_0)  # Current (A)
 
-        new_soc = soc + (I * tick / Q)
-        new_U_P = np.exp(-tick / self.tau) * U_P + I * R_P * (1 - np.exp(-tick / self.tau))
+        new_soc = soc + (current * tick / Q)
+        new_U_P = np.exp(-tick / self.tau) * U_P + current * R_P * (1 - np.exp(-tick / self.tau))
 
         self.state_of_charge = new_soc
         self.U_P = new_U_P
-        self.U_L = U_oc + U_P + (I * R_0)
+        self.U_L = U_oc + U_P + (current * R_0)
 
     def update_array(self, delta_energy_array, tick, rust=True):
         """
@@ -107,7 +101,6 @@ class BatteryModel:
         """
 
         if rust:
-            print("Using Rust")
             return core.update_battery_array(
                 delta_energy_array,
                 tick,
@@ -120,7 +113,6 @@ class BatteryModel:
                 self.nominal_charge_capacity
             )
         else:
-            print("Using Python")
             return self._update_array_py(delta_energy_array, tick)
 
     def _update_array_py(self, delta_energy_array, tick):
