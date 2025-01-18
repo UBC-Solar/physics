@@ -1,7 +1,10 @@
 from physics.models.battery.kalman_filter import EKF_SOC
 from physics.models.battery.battery_config import BatteryModelConfig, load_battery_config
+import pathlib
 
-config: BatteryModelConfig = load_battery_config("/Users/felixtoft/Documents/UBC/SOLAR/physics/tests/battery_config.toml")
+config_path = pathlib.Path(__file__).parent.parent / "battery_config.toml"
+config: BatteryModelConfig = load_battery_config(config_path.absolute())
+
 Kalman_Filter = EKF_SOC(config, 1.0, 0.0)
 
 def test_SOC_Value():
