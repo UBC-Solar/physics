@@ -69,7 +69,7 @@ def test_kalman_filter():
     current_data = csv_to_timeseries_tuples('current.csv')
 
 
-    config: BatteryModelConfig = load_battery_config()
+    config: BatteryModelConfig = load_battery_config("/Users/felixtoft/Documents/UBC/SOLAR/physics/tests/battery_config.toml")
     ekf = EKF_SOC(config, 1, 0)
 
     SOC_array = np.zeros(len(voltage_data))
