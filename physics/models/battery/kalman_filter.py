@@ -1,6 +1,6 @@
 import numpy as np
 from filterpy.kalman import ExtendedKalmanFilter as EKF
-from physics.models.battery import BatteryModelConfig
+from physics.models.battery.battery_config import BatteryModelConfig
 import numpy as np
 
 class EKF_SOC():
