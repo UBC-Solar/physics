@@ -1,1 +1,1 @@
-mod battery;
+pub mod battery;

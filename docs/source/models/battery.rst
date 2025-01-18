@@ -10,3 +10,18 @@ Battery
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. autoclass:: physics.models.battery.BatteryModel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: physics.models.battery.BatteryModelConfig
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: physics.models.battery.load_battery_config
+   :members:
+   :undoc-members:
+   :show-inheritance:
