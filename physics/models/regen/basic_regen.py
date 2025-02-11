@@ -12,7 +12,7 @@ class BasicRegen(BaseRegen):
         self.vehicle_mass = vehicle_mass
         self.kmh_to_mps = 0.278
 
-    def get_regen_efficiency(speed_array):
+    def get_regen_efficiency(self, speed_array):
         """
         Returns: a numpy array of regen efficiency percentage based on the vehicle speed in m/s.
         More details on the polynomial used to calculate efficiency can be found in the regen_analysis
@@ -41,7 +41,7 @@ class BasicRegen(BaseRegen):
 
         # create regen energy produced array
         # if delta_energy is negative, we regen that energy back at the set efficiency rate; else 0 energy regen
-        efficiencies = get_regen_efficiency(speed_ms)
+        efficiencies = self.get_regen_efficiency(speed_ms)
         produced_energy = np.where(delta_energy < 0, abs(delta_energy) * efficiencies, 0)
 
         # Regen does not occur below a certain speed
