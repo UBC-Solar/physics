@@ -19,7 +19,7 @@ class BasicRegen(BaseRegen):
         :param speed_array: a numpy array of speeds in m/s
         :returns: numpy array of regen efficiency percentage
         """
-        # Efficiency polynomial, more details found in regen_analysis folder located in data_analysis
+        # Efficiency polynomial, more details can be found in regen_analysis folder located in data_analysis
         efficiency_poly = [0.022288416685942, 0.026545396753597]
 
         return np.polyval(efficiency_poly, speed_array)
