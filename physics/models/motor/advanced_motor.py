@@ -1,12 +1,8 @@
-import math
 import numpy as np
 from haversine import haversine, Unit
 import pickle
-from pathlib import Path
 
 from physics.models import BasicMotor
-from physics.models.motor.base_motor import BaseMotor
-from physics.models.constants import ACCELERATION_G, AIR_DENSITY
 
 
 class AdvancedMotor(BasicMotor):
@@ -16,7 +12,7 @@ class AdvancedMotor(BasicMotor):
 
     def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, gis_waypoints):
         """
-        Create a function which takes in array of elevation, array of wind speed, required
+        A function which takes in array of elevation, array of wind speed, required
             speed, returns the consumed energy.
 
         :param np.ndarray required_speed_kmh: (float[N]) required speed array in km/h
@@ -61,6 +57,15 @@ class AdvancedMotor(BasicMotor):
 
 
     def calculate_cornering_losses(self, required_speed_kmh, gis_waypoints, tick):
+        """
+        Calculate the energy losses due to cornering based on vehicle speed and trajectory.
+
+        :param np.ndarray required_speed_kmh: (float[N]) Required speed array in km/h
+        :param np.ndarray gis_waypoints: (float[N, 2]) Array containing latitude and longitude coordinates of the car at each tick
+        :param float tick: Length of one update cycle in seconds
+        :returns: (float[N]) Energy loss due to cornering at each tick
+        :rtype: np.ndarray
+        """
         required_speed_ms = required_speed_kmh / 3.6
         cornering_radii = self.calculate_radii(gis_waypoints)
 
@@ -74,92 +79,15 @@ class AdvancedMotor(BasicMotor):
         return slip_distances * centripetal_lateral_force * self.cornering_coefficient
 
 
-    @staticmethod
-    def calculate_meter_distance(coord1, coord2):
-        lat1, lon1 = coord1
-        lat2, lon2 = coord2
-
-        # Base coordinate
-        coord_base = (lat1, lon1)
-        # Coordinate for latitude difference (keep longitude the same)
-        coord_lat = (lat2, lon1)
-        # Coordinate for longitude difference (keep latitude the same)
-        coord_long = (lat1, lon2)
-
-        # Calculate y distance (latitude difference) using haversine function
-        y_distance = haversine(coord_base, coord_lat, unit=Unit.METERS)
-        # Calculate x distance (longitude difference) using haversine function
-        x_distance = haversine(coord_base, coord_long, unit=Unit.METERS)
-
-        if lat2 < lat1:
-            y_distance = -y_distance
-        if lon2 < lon1:
-            x_distance = -x_distance
-
-        return x_distance, y_distance
-
-
-    # uses circumcircle formula
-    @staticmethod
-    def radius_of_curvature(x1, y1, x2, y2, x3, y3):
-        numerator = np.sqrt(
-            ((x3 - x2) ** 2 + (y3 - y2) ** 2) *
-            ((x1 - x3) ** 2 + (y1 - y3) ** 2) *
-            ((x2 - x1) ** 2 + (y2 - y1) ** 2)
-        )
-
-        denominator = 2 * abs(
-            ((x2 - x1) * (y1 - y3) - (x1 - x3) * (y2 - y1))
-        )
-
-        return numerator / denominator
-
-
-    @staticmethod
-    def generate_slip_angle_lookup(min_degrees, max_degrees, num_elements):
-        # coefficients for pacekja's majick formula
-        # https://www.edy.es/dev/docs/pacejka-94-parameters-explained-a-comprehensive-guide/
-        B = .25  # Stiffness (Example value for dry tarmac)
-        C = 2.2  # Shape (Example value for dry tarmac)
-        D = 2.75  # Peak (Example value for dry tarmac)
-        E = 1.0  # Curvature (Example value for dry tarmac)
-
-        # HARD CODED MASS OF BRIGHTSIDE - 350 KG
-        Fz = 350 * 9.81  # Normal load in Newtons
-
-        slip_angles = np.linspace(min_degrees, max_degrees, num_elements)
-        tire_forces = Fz * D * np.sin(
-            C * np.arctan(B * slip_angles - E * (B * slip_angles - np.arctan(B * slip_angles))))
-        return slip_angles, tire_forces
-
-    @staticmethod
-    def write_slip_angles(race_directory):
-        slip_angles, tire_forces = AdvancedMotor.generate_slip_angle_lookup()
-        with open(race_directory / "slip_angle_lookup.pkl", 'wb') as outfile:
-            pickle.dump((slip_angles, tire_forces), outfile)
-
-
-    @staticmethod
-    def read_slip_angle_lookup(race_directory):
-        # Deserialize the data points from the file
-        with open(race_directory / "slip_angle_lookup.pkl", 'rb') as f:
-            slip_angles, tire_forces = pickle.load(f)
-
-        return slip_angles, tire_forces
-
-    @staticmethod
-    def get_slip_angle_for_tire_force(desired_tire_force):
-        # Read the lookup table data points
-        slip_angles, tire_forces = AdvancedMotor.generate_slip_angle_lookup(0, 50, 100000)
-
-        # Use the numpy interpolation function to find slip angle for the given tire force
-        # interpolation estimates unknown slip angle from a tire force that lies between known tire forces (from the lookup table)
-        estimated_slip_angle = np.interp(desired_tire_force, tire_forces, slip_angles)
-
-        return estimated_slip_angle
-
-
     def calculate_radii(self, waypoints):
+        """
+        Calculate the cornering radii for a given set of waypoints.
+
+        :param np.ndarray waypoints: (float[N, 2]) Array containing latitude and longitude coordinates of the car's path
+        :returns: (float[N]) Array of cornering radii at each waypoint
+        :rtype: np.ndarray
+        """
+
         # pop off last coordinate if first and last coordinate are the same
         repeated_last_coordinate = False
         if np.array_equal(waypoints[0], waypoints[len(waypoints) - 1]):
@@ -190,3 +118,114 @@ class AdvancedMotor(BasicMotor):
         cornering_radii = np.where(cornering_radii > 10000, 10000, cornering_radii)
 
         return cornering_radii
+
+
+    def generate_slip_angle_lookup(self, min_degrees, max_degrees, num_elements):
+        """
+        Generate a lookup table of slip angles and corresponding tire forces using Pacejka's Magic Formula.
+
+        https://www.edy.es/dev/docs/pacejka-94-parameters-explained-a-comprehensive-guide/
+
+        :param float min_degrees: Minimum slip angle in degrees
+        :param float max_degrees: Maximum slip angle in degrees
+        :param int num_elements: Number of discrete elements in the lookup table
+        :returns: (float[num_elements], float[num_elements]) Arrays of slip angles (degrees) and corresponding tire forces (Newtons)
+        :rtype: tuple[np.ndarray, np.ndarray]
+        """
+
+        b = .25  # Stiffness
+        c = 2.2  # Shape
+        d = 2.75  # Peak
+        e = 1.0  # Curvature
+
+        fz = self.vehicle_mass * 9.81 # Newtons
+
+        slip_angles = np.linspace(min_degrees, max_degrees, num_elements)
+        tire_forces = fz * d * np.sin(
+            c * np.arctan(b * slip_angles - e * (b * slip_angles - np.arctan(b * slip_angles))))
+
+        return slip_angles, tire_forces
+
+
+    def get_slip_angle_for_tire_force(self, desired_tire_force):
+        slip_angles, tire_forces = self.generate_slip_angle_lookup(0, 70, 100000)
+
+        # Use the numpy interpolation function to find slip angle for the given tire force
+        estimated_slip_angle = np.interp(desired_tire_force, tire_forces, slip_angles)
+
+        return estimated_slip_angle
+
+
+    @staticmethod
+    def calculate_meter_distance(coord1, coord2):
+        """
+        Calculate the x and y distance in meters between two latitude-longitude coordinates.
+
+        :param tuple coord1: (float[2]) The (latitude, longitude) coordinates of the first point
+        :param tuple coord2: (float[2]) The (latitude, longitude) coordinates of the second point
+        :returns: (float[2]) The x (longitude) and y (latitude) distances in meters
+        :rtype: tuple
+        """
+        lat1, lon1 = coord1
+        lat2, lon2 = coord2
+
+        # Base coordinate
+        coord_base = (lat1, lon1)
+        # Coordinate for latitude difference (keep longitude the same)
+        coord_lat = (lat2, lon1)
+        # Coordinate for longitude difference (keep latitude the same)
+        coord_long = (lat1, lon2)
+
+        # Calculate y distance (latitude difference)
+        y_distance = haversine(coord_base, coord_lat, unit=Unit.METERS)
+        # Calculate x distance (longitude difference)
+        x_distance = haversine(coord_base, coord_long, unit=Unit.METERS)
+
+        if lat2 < lat1:
+            y_distance = -y_distance
+        if lon2 < lon1:
+            x_distance = -x_distance
+
+        return x_distance, y_distance
+
+
+    @staticmethod
+    def radius_of_curvature(x1, y1, x2, y2, x3, y3):
+        """
+        Uses the circumcircle the radius of curvature of a circle passing through three points.
+
+        :param float x1: X-coordinate of the first point
+        :param float y1: Y-coordinate of the first point
+        :param float x2: X-coordinate of the second point
+        :param float y2: Y-coordinate of the second point
+        :param float x3: X-coordinate of the third point
+        :param float y3: Y-coordinate of the third point
+        :returns: Radius of curvature of the circle passing through the three points
+        :rtype: float
+        """
+        numerator = np.sqrt(
+            ((x3 - x2) ** 2 + (y3 - y2) ** 2) *
+            ((x1 - x3) ** 2 + (y1 - y3) ** 2) *
+            ((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        )
+
+        denominator = 2 * abs(
+            ((x2 - x1) * (y1 - y3) - (x1 - x3) * (y2 - y1))
+        )
+
+        return numerator / denominator
+
+
+    @staticmethod
+    def read_slip_angle_lookup(race_directory):
+        # Deserialize the data points from the file
+        with open(race_directory / "slip_angle_lookup.pkl", 'rb') as f:
+            slip_angles, tire_forces = pickle.load(f)
+
+        return slip_angles, tire_forces
+
+
+    def write_slip_angles(self, race_directory):
+        slip_angles, tire_forces = self.generate_slip_angle_lookup(0, 70, 100000)
+        with open(race_directory / "slip_angle_lookup.pkl", 'wb') as outfile:
+            pickle.dump((slip_angles, tire_forces), outfile)
