@@ -10,6 +10,7 @@ class AdvancedMotor(BasicMotor):
         super().__init__(**kwargs)
         self.cornering_coefficient = 15  # tuned to Day 1 and 3 FSGP data
 
+
     def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, gis_waypoints):
         """
         A function which takes in array of elevation, array of wind speed, required
