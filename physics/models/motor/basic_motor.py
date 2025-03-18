@@ -98,7 +98,7 @@ class BasicMotor(BaseMotor):
 
         return e_mc
 
-    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick):
+    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, **kwargs):
         """
 
         Create a function which takes in array of elevation, array of wind speed, required
