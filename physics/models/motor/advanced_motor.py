@@ -42,7 +42,9 @@ class AdvancedMotor(BasicMotor):
 
         net_force = road_friction_array + drag_forces + g_forces + acceleration_force
 
-        motor_output_energies = required_angular_speed_rads * net_force * self.tire_radius * tick
+        cornering_work = self.calculate_cornering_losses(required_speed_kmh, gis_waypoints, tick)
+
+        motor_output_energies = required_angular_speed_rads * net_force * self.tire_radius * tick + cornering_work
         motor_output_energies = np.clip(motor_output_energies, a_min=0, a_max=None)
 
         e_m = self.calculate_motor_efficiency(required_angular_speed_rads, motor_output_energies, tick)
