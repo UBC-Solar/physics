@@ -1,7 +1,7 @@
 # This file is maintained according to STG Specification #2: Physics Publishing
 
 [build-system]
-requires = ["setuptools>=64", "setuptools-scm>=8", "setuptools-rust"]
+requires = ["setuptools<64", "setuptools-scm<8", "setuptools-rust"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -104,7 +104,7 @@ py-limited-api = "auto"  # Default value, can be omitted
 
 [tool.cibuildwheel]
 archs = "auto"  # Automatically detects architectures (e.g., x86, ARM)
-skip = ["pp*", "*-musllinux_*", "*-win32"]  # Skip PyPy (only want CPython), Musllinux, win32 wheels
+skip = ["pp*", "*-musllinux_*", "*-win32", "*i686"]  # Skip PyPy (only want CPython), Musllinux, win32, i686 wheels
 manylinux-x86_64-image = "manylinux2014"
 manylinux-i686-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
