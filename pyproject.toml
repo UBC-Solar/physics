@@ -108,4 +108,3 @@ skip = ["pp*", "*-musllinux_*", "*-win32"]  # Skip PyPy (only want CPython), Mus
 manylinux-x86_64-image = "manylinux2014"
 manylinux-i686-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"
-environment = {"MACOSX_DEPLOYMENT_TARGET" = 10.12}
