@@ -1,7 +1,6 @@
 import numpy as np
 from haversine import haversine, Unit
-import pickle
-
+from numpy.typing import NDArray
 from physics.models.motor import BasicMotor
 
 
@@ -10,8 +9,7 @@ class AdvancedMotor(BasicMotor):
         super().__init__(**kwargs)
         self.cornering_coefficient = 15  # tuned to Day 1 and 3 FSGP data
 
-
-    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, gis_waypoints):
+    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, coords):
         """
         A function which takes in array of elevation, array of wind speed, required
             speed, returns the consumed energy.
@@ -20,29 +18,14 @@ class AdvancedMotor(BasicMotor):
         :param np.ndarray gradients: (float[N]) gradient at parts of the road
         :param np.ndarray wind_speeds: (float[N]) speeds of wind in m/s, where > 0 means against the direction of the vehicle
         :param float tick: length of 1 update cycle in seconds
-        :param np.ndarray gis_waypoints: ([float[N,2]) The lat,lon coordinate  of the car at each tick
+        :param np.ndarray coords: ([float[N,2]) The lat,lon coordinate  of the car at each tick
         :returns: (float[N]) energy expended by the motor at every tick
         :rtype: np.ndarray
 
         """
-        required_speed_ms = required_speed_kmh / 3.6
+        net_force, required_angular_speed_rads = self.calculate_net_force(required_speed_kmh, wind_speeds, gradients)
 
-        acceleration_ms2 = np.clip(np.gradient(required_speed_ms), a_min=0, a_max=None)
-        acceleration_force = acceleration_ms2 * self.vehicle_mass
-
-        required_angular_speed_rads = required_speed_ms / self.tire_radius
-
-        drag_forces = 0.5 * self.air_density * (
-                (required_speed_ms + wind_speeds) ** 2) * self.drag_coefficient * self.vehicle_frontal_area
-
-        angles = np.arctan(gradients)
-        g_forces = self.vehicle_mass * self.acceleration_g * np.sin(angles)
-
-        road_friction_array = self.road_friction * self.vehicle_mass * self.acceleration_g * np.cos(angles)
-
-        net_force = road_friction_array + drag_forces + g_forces + acceleration_force
-
-        cornering_work = self.calculate_cornering_losses(required_speed_kmh, gis_waypoints, tick)
+        cornering_work = self.calculate_cornering_losses(required_speed_kmh, coords, tick)
 
         motor_output_energies = required_angular_speed_rads * net_force * self.tire_radius * tick + cornering_work
         motor_output_energies = np.clip(motor_output_energies, a_min=0, a_max=None)
@@ -58,19 +41,18 @@ class AdvancedMotor(BasicMotor):
 
         return motor_controller_input_energies
 
-
-    def calculate_cornering_losses(self, required_speed_kmh, gis_waypoints, tick):
+    def calculate_cornering_losses(self, required_speed_kmh, coords, tick):
         """
         Calculate the energy losses due to cornering based on vehicle speed and trajectory.
 
         :param np.ndarray required_speed_kmh: (float[N]) Required speed array in km/h
-        :param np.ndarray gis_waypoints: (float[N, 2]) Array containing latitude and longitude coordinates of the car at each tick
+        :param np.ndarray coords: (float[N, 2]) Array containing latitude and longitude coordinates of the car at each tick
         :param float tick: Length of one update cycle in seconds
         :returns: (float[N]) Energy loss due to cornering at each tick
         :rtype: np.ndarray
         """
         required_speed_ms = required_speed_kmh / 3.6
-        cornering_radii = self.calculate_radii(gis_waypoints)
+        cornering_radii = self.calculate_radii(coords)
 
         centripetal_lateral_force = self.vehicle_mass * (required_speed_ms ** 2) / cornering_radii
         centripetal_lateral_force = np.clip(centripetal_lateral_force, a_min=0, a_max=10000)
@@ -81,30 +63,29 @@ class AdvancedMotor(BasicMotor):
 
         return slip_distances * centripetal_lateral_force * self.cornering_coefficient
 
-
-    def calculate_radii(self, waypoints):
+    def calculate_radii(self, coords):
         """
         Calculate the cornering radii for a given set of waypoints.
 
-        :param np.ndarray waypoints: (float[N, 2]) Array containing latitude and longitude coordinates of the car's path
+        :param np.ndarray coords: (float[N, 2]) Array containing latitude and longitude coordinates of the car's path
         :returns: (float[N]) Array of cornering radii at each waypoint
         :rtype: np.ndarray
         """
 
         # pop off last coordinate if first and last coordinate are the same
         repeated_last_coordinate = False
-        if np.array_equal(waypoints[0], waypoints[len(waypoints) - 1]):
-            waypoints = waypoints[:-1]
+        if np.array_equal(coords[0], coords[len(coords) - 1]):
+            coords = coords[:-1]
             repeated_last_coordinate = True
 
-        cornering_radii = np.empty(len(waypoints))
-        for i in range(len(waypoints)):
+        cornering_radii = np.empty(len(coords))
+        for i in range(len(coords)):
             # if the next point or previous point is out of bounds, wrap the index around the array
-            i2 = (i - 1) % len(waypoints)
-            i3 = (i + 1) % len(waypoints)
-            current_point = waypoints[i]
-            previous_point = waypoints[i2]
-            next_point = waypoints[i3]
+            i2 = (i - 1) % len(coords)
+            i3 = (i + 1) % len(coords)
+            current_point = coords[i]
+            previous_point = coords[i2]
+            next_point = coords[i3]
 
             x1 = 0
             y1 = 0
@@ -121,7 +102,6 @@ class AdvancedMotor(BasicMotor):
         cornering_radii = np.where(cornering_radii > 10000, 10000, cornering_radii)
 
         return cornering_radii
-
 
     def generate_slip_angle_lookup(self, min_degrees, max_degrees, num_elements):
         """
@@ -141,14 +121,13 @@ class AdvancedMotor(BasicMotor):
         d = 2.75  # Peak
         e = 1.0  # Curvature
 
-        fz = self.vehicle_mass * 9.81 # Newtons
+        fz = self.vehicle_mass * 9.81  # Newtons
 
         slip_angles = np.linspace(min_degrees, max_degrees, num_elements)
         tire_forces = fz * d * np.sin(
             c * np.arctan(b * slip_angles - e * (b * slip_angles - np.arctan(b * slip_angles))))
 
         return slip_angles, tire_forces
-
 
     def get_slip_angle_for_tire_force(self, desired_tire_force):
         slip_angles, tire_forces = self.generate_slip_angle_lookup(0, 70, 100000)
@@ -158,9 +137,8 @@ class AdvancedMotor(BasicMotor):
 
         return estimated_slip_angle
 
-
     @staticmethod
-    def calculate_meter_distance(coord1, coord2):
+    def calculate_meter_distance(coord1: NDArray, coord2: NDArray):
         """
         Calculate the x and y distance in meters between two latitude-longitude coordinates.
 
@@ -191,7 +169,6 @@ class AdvancedMotor(BasicMotor):
 
         return x_distance, y_distance
 
-
     @staticmethod
     def radius_of_curvature(x1, y1, x2, y2, x3, y3):
         """
@@ -217,18 +194,3 @@ class AdvancedMotor(BasicMotor):
         )
 
         return numerator / denominator
-
-
-    @staticmethod
-    def read_slip_angle_lookup(race_directory):
-        # Deserialize the data points from the file
-        with open(race_directory / "slip_angle_lookup.pkl", 'rb') as f:
-            slip_angles, tire_forces = pickle.load(f)
-
-        return slip_angles, tire_forces
-
-
-    def write_slip_angles(self, race_directory):
-        slip_angles, tire_forces = self.generate_slip_angle_lookup(0, 70, 100000)
-        with open(race_directory / "slip_angle_lookup.pkl", 'wb') as outfile:
-            pickle.dump((slip_angles, tire_forces), outfile)
