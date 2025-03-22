@@ -1,6 +1,6 @@
 import math
 import numpy as np
-
+from numpy.typing import NDArray
 from physics.models.motor.base_motor import BaseMotor
 from physics.models.constants import ACCELERATION_G, AIR_DENSITY
 
@@ -33,7 +33,7 @@ class BasicMotor(BaseMotor):
         # print("torque experienced by motor: {} Nm".format(self.constant_torque))
 
     @staticmethod
-    def calculate_motor_efficiency(motor_angular_speed, motor_output_energy, tick):
+    def calculate_motor_efficiency(motor_angular_speed, motor_output_energy, tick, *args, **kwargs):
         """
 
         Calculates a NumPy array of motor efficiency from NumPy array of operating angular speeds and NumPy array
@@ -98,19 +98,20 @@ class BasicMotor(BaseMotor):
 
         return e_mc
 
-    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick):
+    def calculate_net_force(self,
+                            required_speed_kmh: NDArray,
+                            wind_speeds: NDArray,
+                            gradients: NDArray
+                            ) -> tuple[NDArray, NDArray]:
         """
+        Calculate the net force on the car, and the required wheel angular velocity.
+        Currently, considers:
+            1. Rolling resistance of the wheels on the road
+            2. Drag force (wind + forward velocity)
+            3. Acceleration force (a = F / m)
+            4. Gravitational force (force to go uphill)
 
-        Create a function which takes in array of elevation, array of wind speed, required
-            speed, returns the consumed energy.
-
-        :param np.ndarray required_speed_kmh: (float[N]) required speed array in km/h
-        :param np.ndarray gradients: (float[N]) gradient at parts of the road
-        :param np.ndarray wind_speeds: (float[N]) speeds of wind in m/s, where > 0 means against the direction of the vehicle
-        :param float tick: length of 1 update cycle in seconds
-        :returns: (float[N]) energy expended by the motor at every tick
-        :rtype: np.ndarray
-
+        :return: net force in N, wheel angular velocity in rad/s
         """
         required_speed_ms = required_speed_kmh / 3.6
 
@@ -128,6 +129,24 @@ class BasicMotor(BaseMotor):
         road_friction_array = self.road_friction * self.vehicle_mass * self.acceleration_g * np.cos(angles)
 
         net_force = road_friction_array + drag_forces + g_forces + acceleration_force
+
+        return net_force, required_angular_speed_rads
+
+    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, **kwargs):
+        """
+
+        Create a function which takes in array of elevation, array of wind speed, required
+            speed, returns the consumed energy.
+
+        :param np.ndarray required_speed_kmh: (float[N]) required speed array in km/h
+        :param np.ndarray gradients: (float[N]) gradient at parts of the road
+        :param np.ndarray wind_speeds: (float[N]) speeds of wind in m/s, where > 0 means against the direction of the vehicle
+        :param float tick: length of 1 update cycle in seconds
+        :returns: (float[N]) energy expended by the motor at every tick
+        :rtype: np.ndarray
+
+        """
+        net_force, required_angular_speed_rads = self.calculate_net_force(required_speed_kmh, wind_speeds, gradients)
 
         motor_output_energies = required_angular_speed_rads * net_force * self.tire_radius * tick
         motor_output_energies = np.clip(motor_output_energies, a_min=0, a_max=None)
