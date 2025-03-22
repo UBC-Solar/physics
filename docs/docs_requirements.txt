@@ -38,7 +38,6 @@ rich
 snowballstemmer
 Sphinx
 sphinx-autodoc-typehints
-sphinx-rtd-theme==2.0.0
 sphinxcontrib-applehelp
 sphinxcontrib-devhelp
 sphinxcontrib-htmlhelp
