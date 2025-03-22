@@ -2,7 +2,7 @@ import numpy as np
 from haversine import haversine, Unit
 import pickle
 
-from physics.models import BasicMotor
+from physics.models.motor import BasicMotor
 
 
 class AdvancedMotor(BasicMotor):
