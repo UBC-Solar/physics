@@ -1,10 +1,10 @@
 import os
 import sys
-from physics import __version__
 sys.path.insert(0, os.path.abspath('../../'))  # Adjust as necessary
 print(sys.path)
 print(os.listdir(os.getcwd()))
 print(os.listdir(sys.path[0]))
+from physics import __version__
 
 # Configuration file for the Sphinx documentation builder.
 #
