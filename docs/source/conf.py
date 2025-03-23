@@ -5,13 +5,6 @@ print(sys.path)
 print(os.listdir(os.getcwd()))
 print(os.listdir(sys.path[0]))
 
-from setuptools_scm import get_version
-
-try:
-    release = get_version(root="..", relative_to=__file__)
-except ImportError:
-    release = "unknown"
-
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -23,7 +16,7 @@ except ImportError:
 project = 'UBC Solar Physics'
 copyright = '2024, UBC Solar'
 author = 'Joshua Riefman'
-release = __version__
+release = "1.0.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
