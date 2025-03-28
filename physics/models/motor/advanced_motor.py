@@ -19,7 +19,7 @@ class AdvancedMotor(BasicMotor):
         :param np.ndarray wind_speeds: (float[N]) speeds of wind in m/s, where > 0 means against the direction of the vehicle
         :param float tick: length of 1 update cycle in seconds
         :param np.ndarray coords: ([float[N,2]) The lat,lon coordinate  of the car at each tick
-        :returns: (float[N]) energy expended by the motor at every tick
+        :returns: (float[N] , float[N,3]) energy expended by the motor at every tick
         :rtype: np.ndarray
 
         """
@@ -39,7 +39,7 @@ class AdvancedMotor(BasicMotor):
         motor_controller_input_energies = np.where(motor_controller_input_energies > 0,
                                                    motor_controller_input_energies, 0)
 
-        return motor_controller_input_energies
+        return motor_controller_input_energies, [cornering_work, gradients]
 
     def calculate_cornering_losses(self, required_speed_kmh, coords, tick):
         """
