@@ -39,7 +39,7 @@ class AdvancedMotor(BasicMotor):
         motor_controller_input_energies = np.where(motor_controller_input_energies > 0,
                                                    motor_controller_input_energies, 0)
 
-        return motor_controller_input_energies, [cornering_work, gradients]
+        return motor_controller_input_energies, cornering_work, gradients
 
     def calculate_cornering_losses(self, required_speed_kmh, coords, tick):
         """
