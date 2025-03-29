@@ -23,7 +23,7 @@ class AdvancedMotor(BasicMotor):
         :rtype: np.ndarray
 
         """
-        net_force, required_angular_speed_rads = self.calculate_net_force(required_speed_kmh, wind_speeds, gradients)
+        net_force, required_angular_speed_rads, road_friction_array, drag_forces, g_forces = self.calculate_net_force(required_speed_kmh, wind_speeds, gradients)
 
         cornering_work = self.calculate_cornering_losses(required_speed_kmh, coords, tick)
 
@@ -39,7 +39,7 @@ class AdvancedMotor(BasicMotor):
         motor_controller_input_energies = np.where(motor_controller_input_energies > 0,
                                                    motor_controller_input_energies, 0)
 
-        return motor_controller_input_energies, cornering_work, gradients
+        return motor_controller_input_energies, cornering_work, gradients, road_friction_array, drag_forces, g_forces
 
     def calculate_cornering_losses(self, required_speed_kmh, coords, tick):
         """
