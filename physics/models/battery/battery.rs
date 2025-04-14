@@ -6,6 +6,14 @@ fn evaluate_polynomial(coefficients: &[f64], x: f64) -> f64 {
     coefficients.iter().fold(0.0, |acc, &coeff| acc * x + coeff)
 }
 
+fn charge_current(p: f64, u_oc: f64, u_p: f64, r0: f64) -> f64 {
+    (-(u_oc + u_p) + ((u_oc + u_p).powi(2) + 4.0 * r0 * p).sqrt()) / (2.0 * r0)
+}
+
+fn discharge_current(p: f64, u_oc: f64, u_p: f64, r0: f64) -> f64 {
+    ((u_oc - u_p) - ((u_oc - u_p).powi(2) - 4.0 * r0 * p).sqrt()) / (2.0 * r0)
+}
+
 /// Evolve the battery state for a single step
 fn battery_evolve(
     power: f64,                    // Watts
@@ -18,8 +26,11 @@ fn battery_evolve(
     time_constant: f64,            // Seconds
     nominal_charge_capacity: f64,  // Nominal charge capacity (Coulombs)
 ) -> (f64, f64, f64) {
-    // Compute current (I) based on power input/output
-    let current: f64 = power / (open_circuit_voltage + polarization_potential + internal_resistance);
+    let current: f64 = if power >= 0.0 {
+        charge_current(power, open_circuit_voltage, polarization_potential, internal_resistance)
+    } else {
+        discharge_current(power, open_circuit_voltage, polarization_potential, internal_resistance)
+    };
 
     // Update state of charge and polarization potential
     let new_state_of_charge: f64 = state_of_charge + (current * tick / nominal_charge_capacity);
