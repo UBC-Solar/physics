@@ -36,10 +36,10 @@ pub fn update_battery_array(
     tick: f64,                                          // Seconds
     initial_state_of_charge: f64,                       // dimensionless, 0 < SOC < 1
     initial_polarization_potential: f64,                // Volts
-    polarization_resistance: f64,                       // Ohms
     internal_resistance_coeffs: ArrayViewD<'_, f64>,    // Coefficients for internal resistance
     open_circuit_voltage_coeffs: ArrayViewD<'_, f64>,   // Coefficients for open-circuit voltage
-    time_constant: f64,                                 // Seconds 
+    polarization_resistance_coeffs: ArrayViewD<'_, f64>,// Coefficients for polarization resistance
+    capacitance_coeffs: ArrayViewD<'_, f64>,            // Coefficients for polarization capacitance
     nominal_charge_capacity: f64,                       // Coulombs
 ) -> (Vec<f64>, Vec<f64>) {
     let mut state_of_charge: f64 = initial_state_of_charge; 
@@ -51,6 +51,9 @@ pub fn update_battery_array(
         // Interpolate values from coefficient
         let open_circuit_voltage: f64 = evaluate_polynomial(open_circuit_voltage_coeffs.as_slice().unwrap(), state_of_charge);
         let internal_resistance: f64 = evaluate_polynomial(internal_resistance_coeffs.as_slice().unwrap(), state_of_charge);
+        let polarization_resistance: f64 = evaluate_polynomial(polarization_resistance_coeffs.as_slice().unwrap(), state_of_charge);
+        let capacitance: f64 = evaluate_polynomial(capacitance_coeffs.as_slice().unwrap(), state_of_charge);
+        let time_constant = polarization_resistance * capacitance;;
 
         let (new_state_of_charge, new_polarization_potential, terminal_voltage) = battery_evolve(
             power,
