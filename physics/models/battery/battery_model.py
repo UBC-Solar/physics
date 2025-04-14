@@ -48,13 +48,13 @@ class BatteryModel:
         R_P_data = battery_config.R_P_data
 
         # ----- Initialize Parameters -----
-        def quintic_polynomial(x, x0, x1, x2, x3, x4, x5, x6, x7):
-            return np.polyval(np.array([x0, x1, x2, x3, x4, x5, x6, x7]), x)
+        def n_polynomial(x, *args):
+            return np.polyval(np.array([*args]), x)
 
-        self.U_oc_coefficients, _ = optimize.curve_fit(quintic_polynomial, Soc_data, Uoc_data)
-        self.R_0_coefficients, _ = optimize.curve_fit(quintic_polynomial, Soc_data, R_0_data)
-        self.C_P_coefficients, _ = optimize.curve_fit(quintic_polynomial, Soc_data, C_P_data)
-        self.R_P_coefficients, _ = optimize.curve_fit(quintic_polynomial, Soc_data, R_P_data)
+        self.U_oc_coefficients, _ = optimize.curve_fit(n_polynomial, Soc_data, Uoc_data)
+        self.R_0_coefficients, _ = optimize.curve_fit(n_polynomial, Soc_data, R_0_data)
+        self.C_P_coefficients, _ = optimize.curve_fit(n_polynomial, Soc_data, C_P_data)
+        self.R_P_coefficients, _ = optimize.curve_fit(n_polynomial, Soc_data, R_P_data)
 
         self.U_oc: SOCDependent = lambda soc: float(np.polyval(self.U_oc_coefficients, soc))     # V
         self.R_0: SOCDependent = lambda soc: float(np.polyval(self.R_0_coefficients, soc))       # Ohms
