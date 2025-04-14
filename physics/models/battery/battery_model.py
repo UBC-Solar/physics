@@ -48,8 +48,8 @@ class BatteryModel:
         R_P_data = battery_config.R_P_data
 
         # ----- Initialize Parameters -----
-        def quintic_polynomial(x, x0, x1, x2, x3, x4):
-            return np.polyval(np.array([x0, x1, x2, x3, x4]), x)
+        def quintic_polynomial(x, x0, x1, x2, x3, x4, x5, x6, x7):
+            return np.polyval(np.array([x0, x1, x2, x3, x4, x5, x6, x7]), x)
 
         self.U_oc_coefficients, _ = optimize.curve_fit(quintic_polynomial, Soc_data, Uoc_data)
         self.R_0_coefficients, _ = optimize.curve_fit(quintic_polynomial, Soc_data, R_0_data)
