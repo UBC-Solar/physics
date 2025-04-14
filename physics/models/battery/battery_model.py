@@ -100,7 +100,7 @@ class BatteryModel:
 
         self.state_of_charge = new_soc
         self.U_P = new_U_P
-        self.U_L = U_oc + U_P + (current * R_0)
+        self.U_L = U_oc + new_U_P + (current * R_0)
 
     def update_array(self, delta_energy_array, tick, rust=True):
         """
