@@ -22,3 +22,7 @@ class BaseGIS(ABC):
     @abstractmethod
     def get_path(self) -> np.ndarray:
         raise NotImplementedError
+
+    @abstractmethod
+    def calculate_current_heading_array(self) -> np.ndarray:
+        raise NotImplementedError
