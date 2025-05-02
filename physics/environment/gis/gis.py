@@ -4,6 +4,7 @@ import core
 import numpy as np
 import sys
 
+from numpy.typing import ArrayLike, NDArray
 from tqdm import tqdm
 from xml.dom import minidom
 from haversine import haversine, Unit
@@ -81,6 +82,38 @@ class GIS(BaseGIS):
 
         """
         return core.closest_gis_indices_loop(distances, self.path_distances)
+
+    def calculate_driving_speeds(
+            self,
+            average_lap_speeds: ArrayLike,
+            simulation_dt: int,
+            driving_allowed: ArrayLike,
+            idle_time: int
+    ) -> NDArray[float]:
+        """
+        Generate valid driving speeds as a simulation-time array given a set of average speeds for each
+        simulated lap.
+        Driving speeds will only be non-zero when we are allowed to drive, and the speed
+        for every tick during a lap will be that lap's corresponding desired average speed for as long
+        as it takes to complete the lap.
+
+        :param average_lap_speeds: An array of average speeds in m/s, one for each simulated lap.
+            If there are more speeds given than laps available, the unused speeds will be silently ignored.
+            If there are too few, an error will be returned.
+        :param simulation_dt: The simulated tick length.
+        :param driving_allowed: A simulation-time boolean where the `True` elements are when we
+            are allowed to drive, and `False` is when we are not.
+        :param idle_time: The length of the track in meters.
+        :return: A simulation-time array of driving speeds in m/s, or an error if there weren't enough
+            laps provided to fill the entire simulation time.
+        """
+        return core.get_driving_speeds(
+            np.array(average_lap_speeds).astype(np.float64),
+            simulation_dt,
+            np.array(driving_allowed).astype(bool),
+            self.path_length,
+            idle_time
+        )
 
     @staticmethod
     def _python_calculate_closest_gis_indices(distances, path_distances):
