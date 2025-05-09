@@ -6,17 +6,9 @@ fn evaluate_polynomial(coefficients: &[f64], x: f64) -> f64 {
     coefficients.iter().fold(0.0, |acc, &coeff| acc * x + coeff)
 }
 
-fn charge_current(p: f64, u_oc: f64, u_p: f64, r0: f64) -> f64 {
-    (-(u_oc + u_p) + ((u_oc + u_p).powi(2) + 4.0 * r0 * p).sqrt()) / (2.0 * r0)
-}
-
-fn discharge_current(p: f64, u_oc: f64, u_p: f64, r0: f64) -> f64 {
-    ((u_oc - u_p) - ((u_oc - u_p).powi(2) - 4.0 * r0 * p).sqrt()) / (2.0 * r0)
-}
-
 /// Evolve the battery state for a single step
 fn battery_evolve(
-    power: f64,                    // Watts
+    current: f64,                  // Amperes
     tick: f64,                     // Seconds
     state_of_charge: f64,          // Dimensionless, 0 < SOC < 1
     polarization_potential: f64,   // Volts
@@ -26,12 +18,6 @@ fn battery_evolve(
     time_constant: f64,            // Seconds
     nominal_charge_capacity: f64,  // Nominal charge capacity (Coulombs)
 ) -> (f64, f64, f64) {
-    let current: f64 = if power >= 0.0 {
-        charge_current(power, open_circuit_voltage, polarization_potential, internal_resistance)
-    } else {
-        discharge_current(power, open_circuit_voltage, polarization_potential, internal_resistance)
-    };
-
     // Update state of charge and polarization potential
     let new_state_of_charge: f64 = state_of_charge + (current * tick / nominal_charge_capacity);
     let new_polarization_potential: f64 = f64::exp(-tick / time_constant) * polarization_potential
@@ -58,16 +44,36 @@ pub fn update_battery_array(
     let mut soc_array: Vec<f64> = Vec::with_capacity(delta_energy_array.len());
     let mut voltage_array: Vec<f64> = Vec::with_capacity(delta_energy_array.len());
 
+    let mut open_circuit_voltage: f64 = evaluate_polynomial(open_circuit_voltage_coeffs.as_slice().unwrap(), state_of_charge);
+    let mut internal_resistance: f64 = evaluate_polynomial(internal_resistance_coeffs.as_slice().unwrap(), state_of_charge);
+    let mut polarization_resistance: f64 = evaluate_polynomial(polarization_resistance_coeffs.as_slice().unwrap(), state_of_charge);
+    let mut capacitance: f64 = evaluate_polynomial(capacitance_coeffs.as_slice().unwrap(), state_of_charge);
+    let mut time_constant = polarization_resistance * capacitance;
+
+    let (_, _, terminal_voltage) = battery_evolve(
+        0.0,
+        tick,
+        state_of_charge,
+        polarization_potential,
+        polarization_resistance,
+        internal_resistance,
+        open_circuit_voltage,
+        time_constant,
+        nominal_charge_capacity,
+    );
+
     for &power in delta_energy_array.iter() {
         // Interpolate values from coefficient
-        let open_circuit_voltage: f64 = evaluate_polynomial(open_circuit_voltage_coeffs.as_slice().unwrap(), state_of_charge);
-        let internal_resistance: f64 = evaluate_polynomial(internal_resistance_coeffs.as_slice().unwrap(), state_of_charge);
-        let polarization_resistance: f64 = evaluate_polynomial(polarization_resistance_coeffs.as_slice().unwrap(), state_of_charge);
-        let capacitance: f64 = evaluate_polynomial(capacitance_coeffs.as_slice().unwrap(), state_of_charge);
-        let time_constant = polarization_resistance * capacitance;
+        open_circuit_voltage = evaluate_polynomial(open_circuit_voltage_coeffs.as_slice().unwrap(), state_of_charge);
+        internal_resistance = evaluate_polynomial(internal_resistance_coeffs.as_slice().unwrap(), state_of_charge);
+        polarization_resistance = evaluate_polynomial(polarization_resistance_coeffs.as_slice().unwrap(), state_of_charge);
+        capacitance = evaluate_polynomial(capacitance_coeffs.as_slice().unwrap(), state_of_charge);
+        time_constant = polarization_resistance * capacitance;
+
+        let current: f64 = power / terminal_voltage;
 
         let (new_state_of_charge, new_polarization_potential, terminal_voltage) = battery_evolve(
-            power,
+            current,
             tick,
             state_of_charge,
             polarization_potential,
@@ -88,28 +94,6 @@ pub fn update_battery_array(
     }
 
     (soc_array, voltage_array)
-}
-
-/// Evolve the battery state for a single step
-fn battery_evolve_current(
-    current: f64,                  // Amperes
-    tick: f64,                     // Seconds
-    state_of_charge: f64,          // Dimensionless, 0 < SOC < 1
-    polarization_potential: f64,   // Volts
-    polarization_resistance: f64,  // Ohms
-    internal_resistance: f64,      // Ohms
-    open_circuit_voltage: f64,     // Volts
-    time_constant: f64,            // Seconds
-    nominal_charge_capacity: f64,  // Nominal charge capacity (Coulombs)
-) -> (f64, f64, f64) {
-    // Update state of charge and polarization potential
-    let new_state_of_charge: f64 = state_of_charge + (current * tick / nominal_charge_capacity);
-    let new_polarization_potential: f64 = f64::exp(-tick / time_constant) * polarization_potential
-        + current * polarization_resistance * (1.0 - f64::exp(-tick / time_constant));
-    let terminal_voltage: f64 = open_circuit_voltage + new_polarization_potential
-        + (current * internal_resistance); // Terminal voltage
-
-    (new_state_of_charge, new_polarization_potential, terminal_voltage)
 }
 
 pub fn update_battery_array_current(
@@ -136,7 +120,7 @@ pub fn update_battery_array_current(
         let capacitance: f64 = evaluate_polynomial(capacitance_coeffs.as_slice().unwrap(), state_of_charge);
         let time_constant = polarization_resistance * capacitance;
 
-        let (new_state_of_charge, new_polarization_potential, terminal_voltage) = battery_evolve_current(
+        let (new_state_of_charge, new_polarization_potential, terminal_voltage) = battery_evolve(
             current,
             tick,
             state_of_charge,
