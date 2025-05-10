@@ -1,9 +1,18 @@
 use std::f64;
-use numpy::ndarray::ArrayViewD;
+use numpy::ndarray::{ArrayView1};
+
+fn get_lookup_index(soc: f64, quantization_step: f64, num_indices: usize, min_soc: f64) -> usize {
+    // Apply the same formula as in Python
+    let index = ((soc - min_soc) / quantization_step).floor() as usize;
+
+    // Clamp the index to be between 0 and num_indices - 1
+    index.min(num_indices - 1)  // equivalent to max(0, min(num_indices - 1, index))
+}
 
 /// Evaluate a polynomial given coefficients and an input value (x)
-fn evaluate_polynomial(coefficients: &[f64], x: f64) -> f64 {
-    coefficients.iter().fold(0.0, |acc, &coeff| acc * x + coeff)
+fn evaluate_lookup(lookup: &[f64], quantization_step: f64, value: f64, min_soc: f64) -> f64 {
+    let index = get_lookup_index(value, quantization_step, lookup.len(), min_soc);
+    lookup[index]
 }
 
 /// Evolve the battery state for a single step
@@ -28,98 +37,46 @@ fn battery_evolve(
     (new_state_of_charge, new_polarization_potential, terminal_voltage)
 }
 
-pub fn update_battery_array(
-    delta_energy_array: ArrayViewD<'_, f64>,            // W*s
-    tick: f64,                                          // Seconds
-    initial_state_of_charge: f64,                       // dimensionless, 0 < SOC < 1
-    initial_polarization_potential: f64,                // Volts
-    internal_resistance_coeffs: ArrayViewD<'_, f64>,    // Coefficients for internal resistance
-    open_circuit_voltage_coeffs: ArrayViewD<'_, f64>,   // Coefficients for open-circuit voltage
-    polarization_resistance_coeffs: ArrayViewD<'_, f64>,// Coefficients for polarization resistance
-    capacitance_coeffs: ArrayViewD<'_, f64>,            // Coefficients for polarization capacitance
-    nominal_charge_capacity: f64,                       // Coulombs
+// Update battery state, using either energy or current draw
+pub fn update_battery_state(
+    energy_or_current_array: ArrayView1<'_, f64>,  // Power (W*s) or current (Amperes)
+    tick: f64,                                     // Seconds
+    initial_state_of_charge: f64,                  // dimensionless, 0 < SOC < 1
+    initial_polarization_potential: f64,           // Volts
+    internal_resistance_lookup: ArrayView1<'_, f64>,// Coefficients for internal resistance
+    open_circuit_voltage_lookup: ArrayView1<'_, f64>, // Coefficients for open-circuit voltage
+    polarization_resistance_lookup: ArrayView1<'_, f64>, // Coefficients for polarization resistance
+    capacitance_lookup: ArrayView1<'_, f64>,        // Coefficients for polarization capacitance
+    nominal_charge_capacity: f64,                   // Coulombs
+    is_energy_input: bool,                          // Whether the input is power or current,
+    quantization_step: f64,                         // The quantization step size of SOC for lookup tables
+    min_soc: f64,
+
 ) -> (Vec<f64>, Vec<f64>) {
     let mut state_of_charge: f64 = initial_state_of_charge;
     let mut polarization_potential: f64 = initial_polarization_potential;
-    let mut soc_array: Vec<f64> = Vec::with_capacity(delta_energy_array.len());
-    let mut voltage_array: Vec<f64> = Vec::with_capacity(delta_energy_array.len());
+    let mut soc_array: Vec<f64> = Vec::with_capacity(energy_or_current_array.len());
+    let mut voltage_array: Vec<f64> = Vec::with_capacity(energy_or_current_array.len());
 
-    let mut open_circuit_voltage: f64 = evaluate_polynomial(open_circuit_voltage_coeffs.as_slice().unwrap(), state_of_charge);
-    let mut internal_resistance: f64 = evaluate_polynomial(internal_resistance_coeffs.as_slice().unwrap(), state_of_charge);
-    let mut polarization_resistance: f64 = evaluate_polynomial(polarization_resistance_coeffs.as_slice().unwrap(), state_of_charge);
-    let mut capacitance: f64 = evaluate_polynomial(capacitance_coeffs.as_slice().unwrap(), state_of_charge);
-    let mut time_constant = polarization_resistance * capacitance;
-
-    let (_, _, terminal_voltage) = battery_evolve(
-        0.0,
-        tick,
-        state_of_charge,
-        polarization_potential,
-        polarization_resistance,
-        internal_resistance,
-        open_circuit_voltage,
-        time_constant,
-        nominal_charge_capacity,
-    );
-
-    for &power in delta_energy_array.iter() {
+    for &input in energy_or_current_array.iter() {
         // Interpolate values from coefficient
-        open_circuit_voltage = evaluate_polynomial(open_circuit_voltage_coeffs.as_slice().unwrap(), state_of_charge);
-        internal_resistance = evaluate_polynomial(internal_resistance_coeffs.as_slice().unwrap(), state_of_charge);
-        polarization_resistance = evaluate_polynomial(polarization_resistance_coeffs.as_slice().unwrap(), state_of_charge);
-        capacitance = evaluate_polynomial(capacitance_coeffs.as_slice().unwrap(), state_of_charge);
-        time_constant = polarization_resistance * capacitance;
-
-        let current: f64 = power / terminal_voltage;
-
-        let (new_state_of_charge, new_polarization_potential, terminal_voltage) = battery_evolve(
-            current,
-            tick,
-            state_of_charge,
-            polarization_potential,
-            polarization_resistance,
-            internal_resistance,
-            open_circuit_voltage,
-            time_constant,
-            nominal_charge_capacity,
-        );
-
-        // Update state for the next iteration
-        state_of_charge = new_state_of_charge;
-        polarization_potential = new_polarization_potential;
-
-        // Store results
-        soc_array.push(new_state_of_charge);
-        voltage_array.push(terminal_voltage);
-    }
-
-    (soc_array, voltage_array)
-}
-
-pub fn update_battery_array_current(
-    current_array: ArrayViewD<'_, f64>,                 // Amperes
-    tick: f64,                                          // Seconds
-    initial_state_of_charge: f64,                       // dimensionless, 0 < SOC < 1
-    initial_polarization_potential: f64,                // Volts
-    internal_resistance_coeffs: ArrayViewD<'_, f64>,    // Coefficients for internal resistance
-    open_circuit_voltage_coeffs: ArrayViewD<'_, f64>,   // Coefficients for open-circuit voltage
-    polarization_resistance_coeffs: ArrayViewD<'_, f64>,// Coefficients for polarization resistance
-    capacitance_coeffs: ArrayViewD<'_, f64>,            // Coefficients for polarization capacitance
-    nominal_charge_capacity: f64,                       // Coulombs
-) -> (Vec<f64>, Vec<f64>) {
-    let mut state_of_charge: f64 = initial_state_of_charge;
-    let mut polarization_potential: f64 = initial_polarization_potential;
-    let mut soc_array: Vec<f64> = Vec::with_capacity(current_array.len());
-    let mut voltage_array: Vec<f64> = Vec::with_capacity(current_array.len());
-
-    for &current in current_array.iter() {
-        // Interpolate values from coefficient
-        let open_circuit_voltage: f64 = evaluate_polynomial(open_circuit_voltage_coeffs.as_slice().unwrap(), state_of_charge);
-        let internal_resistance: f64 = evaluate_polynomial(internal_resistance_coeffs.as_slice().unwrap(), state_of_charge);
-        let polarization_resistance: f64 = evaluate_polynomial(polarization_resistance_coeffs.as_slice().unwrap(), state_of_charge);
-        let capacitance: f64 = evaluate_polynomial(capacitance_coeffs.as_slice().unwrap(), state_of_charge);
+        let open_circuit_voltage = evaluate_lookup(open_circuit_voltage_lookup.as_slice().unwrap(), quantization_step, state_of_charge, min_soc);
+        let internal_resistance = evaluate_lookup(internal_resistance_lookup.as_slice().unwrap(), quantization_step, state_of_charge, min_soc);
+        let polarization_resistance = evaluate_lookup(polarization_resistance_lookup.as_slice().unwrap(), quantization_step, state_of_charge, min_soc);
+        let capacitance = evaluate_lookup(capacitance_lookup.as_slice().unwrap(), quantization_step, state_of_charge, min_soc);
         let time_constant = polarization_resistance * capacitance;
 
+        // Calculate current from power or use the current directly
+        let current: f64 = if is_energy_input {
+            // Use the last voltage to calculate current, or an absurdly large number if it is the
+            // first, because we don't know voltage yet, so we will have a very small initial
+            // current, no matter what. We shouldn't be starting to simulate when the battery is
+            // in an active state anyway, so this should be an alright compromise.
+            input / (tick * voltage_array.last().unwrap_or(&10000.0)) // I = (E / dt) / V
+        } else {
+            input // Current is directly given in the current input array
+        };
+
         let (new_state_of_charge, new_polarization_potential, terminal_voltage) = battery_evolve(
             current,
             tick,
@@ -143,4 +100,3 @@ pub fn update_battery_array_current(
 
     (soc_array, voltage_array)
 }
-
