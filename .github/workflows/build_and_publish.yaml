@@ -20,12 +20,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Required to fetch full history including tags, so setuptools_scm can determine version
 
       - name: Setup Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
@@ -59,7 +59,7 @@ jobs:
           fetch-depth: 0  # Required to fetch full history including tags, so setuptools_scm can determine version
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
 
       # We run `python -m setuptools_scm` and `git status` for debugging purposes, to verify that
       # setuptools_scm is properly identifying the version based on the tag
@@ -92,7 +92,7 @@ jobs:
         run: cibuildwheel --output-dir dist
         env:
           CIBW_ARCHS_MACOS: "x86_64 arm64"  # Make sure both x86_64 and arm64 wheels are built for macOS
-          CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH"'
+          CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH" MACOSX_DEPLOYMENT_TARGET="10.12"'
           CIBW_ENVIRONMENT_WINDOWS: 'PATH="$UserProfile\.cargo\bin;$PATH"'
           CIBW_BEFORE_BUILD: >
             pip install -U setuptools-rust &&

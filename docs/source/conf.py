@@ -1,16 +1,9 @@
-# from setuptools_scm import get_version
-# from pathlib import Path
-# import importlib
-
-# Generate the version file
-# version = get_version()
-# version_file = Path('physics/_version.py')
-# version_file.write_text(f"__version__ = '{version}'\n")
-
-# Dynamically import the version
-# importlib.invalidate_caches()
-# physics_module = importlib.import_module("physics")
-# __version__ = physics_module.__version__
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../../'))  # Adjust as necessary
+print(sys.path)
+print(os.listdir(os.getcwd()))
+print(os.listdir(sys.path[0]))
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -23,7 +16,7 @@
 project = 'UBC Solar Physics'
 copyright = '2024, UBC Solar'
 author = 'Joshua Riefman'
-release = '1.0.0'
+release = "1.0.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

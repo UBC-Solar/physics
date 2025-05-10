@@ -1,7 +1,7 @@
 # This file is maintained according to STG Specification #2: Physics Publishing
 
 [build-system]
-requires = ["setuptools>=64", "setuptools-scm>=8", "setuptools-rust"]
+requires = ["setuptools<75", "setuptools-scm<8.2.0", "setuptools-rust"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -52,7 +52,7 @@ dependencies = [
     "backports.tarfile==1.2.0",
     "certifi==2024.7.4",
     "charset-normalizer==3.3.2",
-    "dill==0.3.8",
+    "dill>=0.3.8",
     "haversine==2.8.1",
     "idna==3.7",
     "importlib_metadata==8.2.0",
@@ -60,12 +60,12 @@ dependencies = [
     "jaraco.context==5.3.0",
     "jaraco.functools==4.0.2",
     "keyring==25.3.0",
-    "llvmlite==0.43.0",
+    "llvmlite",
     "markdown-it-py==3.0.0",
     "mdurl==0.1.2",
     "more-itertools==10.4.0",
     "nh3==0.2.18",
-    "numba==0.60.0",
+    "numba",
     "numpy==2.0.1",
     "pkginfo==1.10.0",
     "Pygments==2.18.0",
@@ -104,7 +104,7 @@ py-limited-api = "auto"  # Default value, can be omitted
 
 [tool.cibuildwheel]
 archs = "auto"  # Automatically detects architectures (e.g., x86, ARM)
-skip = ["pp*", "*-musllinux_*", "*-win32"]  # Skip PyPy (only want CPython), Musllinux, win32 wheels
+skip = ["pp*", "*-musllinux_*", "*-win32", "*i686"]  # Skip PyPy (only want CPython), Musllinux, win32, i686 wheels
 manylinux-x86_64-image = "manylinux2014"
 manylinux-i686-image = "manylinux2014"
 manylinux-aarch64-image = "manylinux2014"

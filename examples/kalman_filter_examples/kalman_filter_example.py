@@ -63,7 +63,13 @@ def test_kalman_filter():
     time_axis = [entry[0] for entry in voltage_data]
 
 
+<<<<<<<< HEAD:examples/kalman_filter_examples/kalman_filter_example.py
     config: BatteryModelConfig = load_battery_config('/Users/felixtoft/Documents/UBC/SOLAR/physics/examples/kalman_filter_examples/battery_config.toml')
+========
+    config_path = pathlib.Path(__file__).parent.parent / "battery_config.toml"
+    config: BatteryModelConfig = load_battery_config(config_path.absolute())
+    
+>>>>>>>> main:tests/kalman_filter_tests/test_filter_real_data.py
     ekf = EKF_SOC(config, 1, 0)
 
     SOC_array = np.zeros(len(voltage_data))

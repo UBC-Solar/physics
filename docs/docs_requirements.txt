@@ -38,7 +38,6 @@ rich
 snowballstemmer
 Sphinx
 sphinx-autodoc-typehints
-sphinx-rtd-theme==2.0.0
 sphinxcontrib-applehelp
 sphinxcontrib-devhelp
 sphinxcontrib-htmlhelp
@@ -51,3 +50,4 @@ urllib3
 zipp
 setuptools_scm
 pydata-sphinx-theme==0.15.4
+ubc-solar-physics==1.5.0
