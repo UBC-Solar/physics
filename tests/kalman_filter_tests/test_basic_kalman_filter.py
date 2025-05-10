@@ -1,11 +1,11 @@
-from physics.models.battery.kalman_filter import EKF_SOC
+from physics.models.battery.kalman_filter import FilteredBatteryModel
 from physics.models.battery.battery_config import BatteryModelConfig, load_battery_config
 import pathlib
 
 config_path = pathlib.Path(__file__).parent.parent / "battery_config.toml"
 config: BatteryModelConfig = load_battery_config(config_path.absolute())
 
-Kalman_Filter = EKF_SOC(config, 1.0, 0.0)
+Kalman_Filter = FilteredBatteryModel(config, 1.0, 0.0)
 
 def test_SOC_Value():
     SOC = Kalman_Filter.get_SOC()
@@ -29,7 +29,7 @@ def test_update_filter_invalid_arguments():
     try:
         Kalman_Filter.update_filter(3.5, 30)
     except TypeError as e:
-        assert "Invalid type for current I" in str(e)
+        assert "Invalid type for current current" in str(e)
 
     # Test invalid terminal voltage value (out of range)
     try:

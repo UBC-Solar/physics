@@ -40,20 +40,26 @@ def battery_model():
     voltage_data = csv_to_timeseries_tuples('voltage.csv')
     current_data = csv_to_timeseries_tuples('current.csv')
 
+    # This dataset has 0.1s period between measurements
+    time_difference = 0.1
+
     current_raw = current_data[:, 1]
     current_error = np.polyval([-0.00388, 1547], current_raw * 1000.0)
+
     current = current_raw - (current_error / 1000)
+    voltage = voltage_data[:, 1]
+
+    energy_array = current * voltage * time_difference
 
     model_config: BatteryModelConfig = load_battery_config(pathlib.Path(__file__).parent / 'battery_config.toml')
 
     battery_model = EquivalentCircuitBatteryModel(model_config, state_of_charge=1.04)
 
-    time_difference = (voltage_data[1][0] - voltage_data[0][0]).total_seconds()
-    print(time_difference)
     soc_array, predicted_ut_array = battery_model.update_array(tick=time_difference, current_array=np.array(-current, dtype=float))
+    # soc_array, predicted_ut_array = battery_model.update_array(tick=time_difference, delta_energy_array=np.array(-energy_array, dtype=float))
 
     # example usage
-    plot_results(soc_array, predicted_ut_array, voltage_data[:, 1])
+    plot_results(soc_array, predicted_ut_array, voltage)
 
 
 if __name__ == '__main__':

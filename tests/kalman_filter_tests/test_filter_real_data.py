@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from physics.models.battery.kalman_filter import EKF_SOC
+from physics.models.battery.kalman_filter import FilteredBatteryModel
 from physics.models.battery.battery_config import BatteryModelConfig, load_battery_config
 import matplotlib.pyplot as plt
 import pathlib
@@ -73,7 +73,7 @@ def test_kalman_filter():
     config_path = pathlib.Path(__file__).parent.parent / "battery_config.toml"
     config: BatteryModelConfig = load_battery_config(config_path.absolute())
     
-    ekf = EKF_SOC(config, 1, 0)
+    ekf = FilteredBatteryModel(config, 1, 0)
 
     SOC_array = np.zeros(len(voltage_data))
     Ut_array = np.zeros(len(voltage_data))
