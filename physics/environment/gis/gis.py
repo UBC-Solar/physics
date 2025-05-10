@@ -108,7 +108,7 @@ class GIS(BaseGIS):
         :return: A simulation-time array of driving speeds in m/s, or an error if there weren't enough
             laps provided to fill the entire simulation time.
         """
-        return core.get_driving_speeds(
+        return physics_rs.get_driving_speeds(
             np.array(average_lap_speeds).astype(np.float64),
             simulation_dt,
             np.array(driving_allowed).astype(bool),
