@@ -1,5 +1,5 @@
 use numpy::ndarray::ArrayViewD;
-use numpy::{PyArray, PyArrayDyn, PyReadwriteArrayDyn, PyReadonlyArray1, PyArray1};
+use numpy::{PyArray, PyArrayDyn, PyReadwriteArrayDyn, PyReadwriteArray1, PyReadonlyArray1, PyArray1};
 use pyo3::prelude::*;
 use pyo3::types::PyModule;
 
