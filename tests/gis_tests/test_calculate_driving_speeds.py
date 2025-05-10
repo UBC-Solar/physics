@@ -63,7 +63,7 @@ def test_failure():
     driving_allowed = np.array([0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype=bool)
 
     with pytest.raises(ValueError):
-        core.get_driving_speeds(average_speeds_too_few, simulation_dt, driving_allowed, track_length, idle_time)
+        physics_rs.get_driving_speeds(average_speeds_too_few, simulation_dt, driving_allowed, track_length, idle_time)
 
     driving_speeds = physics_rs.get_driving_speeds(average_speeds_too_many, simulation_dt, driving_allowed, track_length, idle_time)
 
