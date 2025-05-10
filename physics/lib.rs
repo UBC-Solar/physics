@@ -1,13 +1,12 @@
-use chrono::{Datelike, NaiveDateTime, Timelike};
-use numpy::ndarray::{s, Array, Array2, ArrayViewD, ArrayViewMut2, ArrayViewMut3, Axis};
-use numpy::{PyArray, PyArrayDyn, PyReadwriteArrayDyn};
+use numpy::ndarray::ArrayViewD;
+use numpy::{PyArray, PyArrayDyn, PyReadwriteArrayDyn, PyReadonlyArray1, PyArray1};
 use pyo3::prelude::*;
 use pyo3::types::PyModule;
 
 pub mod environment;
 pub mod models;
-use crate::environment::gis::gis::rust_closest_gis_indices_loop;
-use crate::environment::meteorology::meteorology::{rust_calculate_array_ghi_times, rust_closest_weather_indices_loop, rust_weather_in_time, rust_closest_timestamp_indices};
+use crate::environment::gis::gis::{rust_closest_gis_indices_loop, get_driving_speeds};
+use crate::environment::meteorology::meteorology::{rust_calculate_array_ghi_times, rust_closest_weather_indices_loop, rust_weather_in_time};
 use crate::models::battery::battery::update_battery_array;
 
 fn constrain_speeds(speed_limits: ArrayViewD<f64>,  speeds: ArrayViewD<f64>, tick: i32) -> Vec<f64> {
@@ -126,6 +125,31 @@ fn rust_simulation(_py: Python, m: &PyModule) -> PyResult<()> {
         let py_soc_array = PyArray::from_vec(py, soc_array).to_dyn();
         let py_voltage_array = PyArray::from_vec(py, voltage_array).to_dyn();
         (py_soc_array, py_voltage_array)
+    }
+
+    #[pyfn(m)]
+    #[pyo3(name = "get_driving_speeds")]
+    fn py_get_driving_speeds<'py>(
+        py: Python<'py>,
+        py_average_speeds: PyReadonlyArray1<'py, f64>,            // Average speeds in m/s
+        simulation_dt: i64,                                       // Time step in seconds
+        py_driving_allowed_boolean: PyReadonlyArray1<'py, bool>,  // Simulation-time boolean array
+        track_length: f64,                                        // Track length in meters
+        idle_time: i64                                            // Time to idle in seconds
+    ) -> PyResult<&'py PyArray1<f64>> {
+        let average_speeds = py_average_speeds.as_array();
+        let driving_allowed_boolean = py_driving_allowed_boolean.as_array();
+
+        match get_driving_speeds(
+            average_speeds,
+            simulation_dt,
+            driving_allowed_boolean,
+            track_length,
+            idle_time
+        ) {
+            Ok(driving_speeds) => Ok(PyArray1::from_vec(py, driving_speeds)),
+            Err(error) => Err(pyo3::exceptions::PyValueError::new_err(error))
+        }
     }
 
     Ok(())

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 
 
 class BaseGIS(ABC):
@@ -21,4 +22,17 @@ class BaseGIS(ABC):
 
     @abstractmethod
     def get_path(self) -> np.ndarray:
+        raise NotImplementedError
+
+    @abstractmethod
+    def calculate_current_heading_array(self) -> np.ndarray:
+        raise NotImplementedError
+
+    def calculate_driving_speeds(
+            self,
+            average_lap_speeds: ArrayLike,
+            simulation_dt: int,
+            driving_allowed: ArrayLike,
+            idle_time: int
+    ) -> NDArray[float]:
         raise NotImplementedError
