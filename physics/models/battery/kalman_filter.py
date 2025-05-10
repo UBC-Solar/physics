@@ -5,6 +5,60 @@ from physics.models.battery.battery_config import BatteryModelConfig
 
 
 class EKF_SOC:
+    def __init__(self, battery_config: BatteryModelConfig, initial_SOC=1, initial_Uc=0):
+        """
+        EKF_SOC represents the Kalman filter used for predicting state of charge.
+
+        :param BatteryModelConfig battery_config: Contains the HPPC parameters of the battery model.
+        :param float initial_SOC: Initial state of charge of the battery (ranges from 0 to 1 inclusive, default is 1).
+        :param float initial_Uc: Initial polarization voltage of the battery in volts (default is 0).
+        """
+        # Initial state
+        self.SOC = initial_SOC
+        self.Uc = initial_Uc  # Polarization Voltage
+
+        # Load Config data
+        self.Q_total = battery_config.Q_total
+        SOC_data = battery_config.SOC_data
+        Uoc_data = battery_config.Uoc_data
+        R_0_data = battery_config.R_0_data
+        R_P_data = battery_config.R_P_data
+        C_P_data = battery_config.C_P_data
+
+        def quintic_polynomial(x, x0, x1, x2, x3, x4, x5, x6, x7):
+            return np.polyval([x0, x1, x2, x3, x4, x5, x6, x7], x)
+
+        U_oc_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, Uoc_data)
+        R_0_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, R_0_data)
+        R_P_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, R_P_data)
+        C_P_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, C_P_data)
+        self.U_oc = lambda soc: np.polyval(U_oc_coefficients, soc)  # Open-circuit voltage as a function of SOC
+        self.R_0 = lambda soc: np.polyval(R_0_coefficients, soc)  # Resistance as a function of SOC
+        self.R_P = lambda soc: np.polyval(R_P_coefficients, soc)  # Resistance as a function of SOC
+        self.C_P = lambda soc: np.polyval(C_P_coefficients, soc)  # Resistance as a function of SOC
+        self.Uoc_derivative = lambda soc: np.polyval(np.polyder(U_oc_coefficients),
+                                                     np.minimum(1.0, soc))  # Derivative of Uoc wrt SOC
+        self.R_0_derivative = lambda soc: np.polyval(np.polyder(R_0_coefficients), np.minimum(1.0, soc))
+
+        self.tau = lambda soc: self.R_P(soc) * self.C_P(soc)
+
+        # initializing the ekf object
+        self.ekf = EKF(dim_x=2, dim_z=1)
+        self.ekf.x = np.array([self.SOC, self.Uc])
+        self.ekf.Q = np.diag([
+            1e-10 * 0.1,  # add floor to maintain numerical stability
+            1e-6 * 0.1
+        ])
+        self.ekf.P = np.diag(
+            [1e-2 * 0.5,
+             1e-1]
+        )
+        self.ekf.R = np.eye(1) * 1e0 * 0.5
+
+        # For logs
+        self._filtered_I = 0
+        self.predicted_measurement = 0
+
     def get_SOC(self):
         """
         Return the current state of charge of the battery.
@@ -138,58 +192,3 @@ class EKF_SOC:
         R0 = self.R_0(SOC)
         self.predicted_measurement = Uoc - Uc - R0 * self._filtered_I
         return self.predicted_measurement
-
-    def __init__(self, battery_config: BatteryModelConfig, initial_SOC=1, initial_Uc=0):
-        """
-        EKF_SOC represents the Kalman filter used for predicting state of charge.
-
-        :param BatteryModelConfig battery_config: Contains the HPPC parameters of the battery model.
-        :param float initial_SOC: Initial state of charge of the battery (ranges from 0 to 1 inclusive, default is 1).
-        :param float initial_Uc: Initial polarization voltage of the battery in volts (default is 0).
-        """
-        # Initial state
-        self.SOC = initial_SOC
-        self.Uc = initial_Uc  # Polarization Voltage
-
-        # Load Config data
-        self.Q_total = battery_config.Q_total
-        SOC_data = battery_config.SOC_data
-        Uoc_data = battery_config.Uoc_data
-        R_0_data = battery_config.R_0_data
-        R_P_data = battery_config.R_P_data
-        C_P_data = battery_config.C_P_data
-
-        def quintic_polynomial(x, x0, x1, x2, x3, x4, x5, x6, x7):
-            return np.polyval([x0, x1, x2, x3, x4, x5, x6, x7], x)
-
-        U_oc_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, Uoc_data)
-        R_0_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, R_0_data)
-        R_P_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, R_P_data)
-        C_P_coefficients, _ = optimize.curve_fit(quintic_polynomial, SOC_data, C_P_data)
-        self.U_oc = lambda soc: np.polyval(U_oc_coefficients, soc)  # Open-circuit voltage as a function of SOC
-        self.R_0 = lambda soc: np.polyval(R_0_coefficients, soc)  # Resistance as a function of SOC
-        self.R_P = lambda soc: np.polyval(R_P_coefficients, soc)  # Resistance as a function of SOC
-        self.C_P = lambda soc: np.polyval(C_P_coefficients, soc)  # Resistance as a function of SOC
-        self.Uoc_derivative = lambda soc: np.polyval(np.polyder(U_oc_coefficients),
-                                                     np.minimum(1.0, soc))  # Derivative of Uoc wrt SOC
-        self.R_0_derivative = lambda soc: np.polyval(np.polyder(R_0_coefficients), np.minimum(1.0, soc))
-
-        self.tau = lambda soc: self.R_P(soc) * self.C_P(soc)
-
-        # initializing the ekf object
-        self.ekf = EKF(dim_x=2, dim_z=1)
-        self.ekf.x = np.array([self.SOC, self.Uc])
-        self.ekf.Q = np.diag([
-            1e-10 * 0.1,  # add floor to maintain numerical stability
-            1e-6 * 0.1
-        ])
-        self.ekf.P = np.diag(
-            [1e-2 * 0.5,
-             1e-1]
-        )
-        self.ekf.R = np.eye(1) * 1e0 * 0.5
-
-        # For logs
-        self._filtered_I = 0
-        self.predicted_measurement = 0
-
