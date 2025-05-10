@@ -14,6 +14,9 @@ pub fn rust_closest_gis_indices_loop(
         while distance_travelled > path_distances[current_coord_index] {
             distance_travelled -= path_distances[current_coord_index];
             current_coord_index += 1;
+            if current_coord_index >= path_distances.len() {
+                current_coord_index = 0;
+            }
         }
 
         current_coord_index = std::cmp::min(current_coord_index, path_distances.len() - 1);
