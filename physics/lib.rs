@@ -7,7 +7,7 @@ pub mod environment;
 pub mod models;
 use crate::environment::gis::gis::{rust_closest_gis_indices_loop, get_driving_speeds};
 use crate::environment::meteorology::meteorology::{rust_calculate_array_ghi_times, rust_closest_weather_indices_loop, rust_weather_in_time};
-use crate::models::battery::battery::update_battery_array;
+use crate::models::battery::battery::update_battery_state;
 
 fn constrain_speeds(speed_limits: ArrayViewD<f64>,  speeds: ArrayViewD<f64>, tick: i32) -> Vec<f64> {
     let mut distance: f64 = 0.0;
