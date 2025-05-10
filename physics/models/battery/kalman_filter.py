@@ -61,6 +61,8 @@ class FilteredBatteryModel:
         :param float initial_Uc: Initial polarization voltage of the battery in Volts.
         """
         # Initial state
+        assert 0.0 <= initial_SOC <= 1.1, "`initial_SOC` must be in (0, 1.1]!"
+
         self._SOC = initial_SOC     # State of Charge
         self._Uc = initial_Uc       # Polarization Voltage
 
@@ -102,8 +104,9 @@ class FilteredBatteryModel:
         self._ekf.Q = battery_config.process_noise_matrix
         self._ekf.R = battery_config.measurement_noise_vector
 
-        # For logs
+        assert 0 <= alpha <= 1, "`alpha` should be between 0 and 1!"
         self._alpha = alpha
+
         self._filtered_I = 0
         self._predicted_measurement = 0
 
