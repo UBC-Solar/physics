@@ -172,7 +172,7 @@ class FilteredBatteryModel:
         self._ekf.predict(u=current)
         self._SOC, self._Uc = self._ekf.x
 
-    def predict_then_update(self, measured_Ut, current, time_step):
+    def predict_then_update(self, measured_Ut: float, current: float, time_step: float):
         """
         Predict the next evolution of the state vector (SOC, Uc), then update the filter
         based on this prediction and a measurement. Abstracts the full predict-update workflow of the EKF.
@@ -198,7 +198,7 @@ class FilteredBatteryModel:
         """
         Return the measurement Jacobian matrix for the current state vector.
 
-        :param list[float, float] x: The state vector [_SOC, _Uc].
+        :param list[float, float] x: The state vector [SOC, Uc].
         :return: The measurement Jacobian matrix.
         :rtype: np.ndarray
         """
@@ -212,7 +212,7 @@ class FilteredBatteryModel:
         """
         Return the measurement function relating terminal voltage to SOC and polarization voltage.
 
-        :param list[float, float] x: The state vector [_SOC, _Uc].
+        :param list[float, float] x: The state vector [SOC, Uc].
         :return: The predicted terminal voltage.
         """
         SOC, Uc = x
