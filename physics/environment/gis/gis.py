@@ -1,6 +1,6 @@
 import logging
 import math
-import core
+import physics_rs
 import numpy as np
 import sys
 
@@ -80,13 +80,13 @@ class GIS(BaseGIS):
         :rtype: np.ndarray
 
         """
-        return core.closest_gis_indices_loop(distances, self.path_distances)
+        return physics_rs.closest_gis_indices_loop(distances, self.path_distances)
 
     @staticmethod
     def _python_calculate_closest_gis_indices(distances, path_distances):
         """
 
-        Python implementation of rust core.closest_gis_indices_loop. See parent function for documentation details.
+        Python implementation of use_compiled core.closest_gis_indices_loop. See parent function for documentation details.
 
         """
 

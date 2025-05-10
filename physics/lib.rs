@@ -26,7 +26,7 @@ fn constrain_speeds(speed_limits: ArrayViewD<f64>,  speeds: ArrayViewD<f64>, tic
 
 /// A Python module implemented in Rust. The name of this function is the Rust module name!
 #[pymodule]
-#[pyo3(name = "core")]
+#[pyo3(name = "physics_rs")]
 fn rust_simulation(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m)]
         #[pyo3(name = "constrain_speeds")]
