@@ -1,11 +1,10 @@
 import numpy as np
 import pandas as pd
-import pathlib
 import pytest
-import matplotlib.pyplot as plt
 from physics.models.battery.kalman_filter import EKF_SOC
 from physics.models.battery.battery_config import BatteryModelConfig, load_battery_config
-
+import matplotlib.pyplot as plt
+import pathlib
 
 
 
@@ -16,7 +15,8 @@ def csv_to_timeseries_tuples(csv_file):
     df['Time'] = pd.to_datetime(df['Time'])
     return np.array(list(zip(df['Time'].dt.to_pydatetime(), df['Value'])))
 
-def plot_kalman_results(time_axis, data_arrays, labels):
+
+def plot_kalman_results(data_arrays, labels):
     """
     Plots multiple data arrays against a common time axis on separate y-axes.
 
@@ -24,14 +24,21 @@ def plot_kalman_results(time_axis, data_arrays, labels):
     - time_axis: Array of time values
     - data_arrays: List of data arrays to plot (each array should be of equal length)
     - labels: List of labels for each data array
+    - colors: List of colors for each data array
+
+    Example:
+    plot_kalman_results([SOC_array, voltage_array, current_array], 
+                        ["SOC", "Voltage (V)", "Current (A)"], 
+                        ["tab:blue", "tab:red", "tab:green"])
     """
+    time_axis = [entry[0] for entry in data_arrays[0]]
     # Predefined color list
     colors = [
         "tab:blue", "tab:orange", "tab:green", "tab:red", "tab:purple",
         "tab:brown", "tab:pink", "tab:gray", "tab:olive", "tab:cyan"
     ]
     
-    # Ensure input arrays are of the same length as the time axis
+    # Ensure input arrays are of the same length
     if not all(len(arr) == len(time_axis) for arr in data_arrays):
         raise ValueError("All data arrays must be of the same length as the time axis.")
     
@@ -55,15 +62,17 @@ def plot_kalman_results(time_axis, data_arrays, labels):
 
 
 
+@pytest.mark.skip(reason="this isn't a real test and takes quite long")
 def test_kalman_filter():
     
     voltage_data = csv_to_timeseries_tuples('voltage.csv')
     current_data = csv_to_timeseries_tuples('current.csv')
 
-    time_axis = [entry[0] for entry in voltage_data]
 
 
-    config: BatteryModelConfig = load_battery_config('/Users/felixtoft/Documents/UBC/SOLAR/physics/examples/kalman_filter_examples/battery_config.toml')
+    config_path = pathlib.Path(__file__).parent.parent / "battery_config.toml"
+    config: BatteryModelConfig = load_battery_config(config_path.absolute())
+    
     ekf = EKF_SOC(config, 1, 0)
 
     SOC_array = np.zeros(len(voltage_data))
@@ -89,9 +98,7 @@ def test_kalman_filter():
 
     # example usage
     plot_kalman_results(
-        time_axis,
         [SOC_array, Ut_array, predicted_Ut_array], 
         ["SOC", "Measured Terminal Voltage (V)", "Predicted Terminal Voltage (V)"]
     )
 
-test_kalman_filter()
