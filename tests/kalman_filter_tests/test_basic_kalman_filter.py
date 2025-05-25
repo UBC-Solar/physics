@@ -1,46 +1,72 @@
-from physics.models.battery.kalman_filter import EKF_SOC
-from physics.models.battery.battery_config import BatteryModelConfig, load_battery_config
-import pathlib
-
-config_path = pathlib.Path(__file__).parent.parent / "battery_config.toml"
-config: BatteryModelConfig = load_battery_config(config_path.absolute())
-
-Kalman_Filter = EKF_SOC(config, 1.0, 0.0)
-
-def test_SOC_Value():
-    SOC = Kalman_Filter.get_SOC()
-    assert type(SOC) == float
-    assert SOC <= 1.0
-    assert SOC >= 0.10
-
-def test_Uc_Value():
-    Uc = Kalman_Filter.get_Uc()
-    assert Uc >= 0
-    assert type(Uc) == float
-
-def test_update_filter_invalid_arguments():
-    # Test invalid current value (out of range)
-    try:
-        Kalman_Filter.update_filter(3.5, 50.0)
-    except ValueError as e:
-        assert "Invalid value for current" in str(e)
-
-    # Test invalid current type (not a float)
-    try:
-        Kalman_Filter.update_filter(3.5, 30)
-    except TypeError as e:
-        assert "Invalid type for current I" in str(e)
-
-    # Test invalid terminal voltage value (out of range)
-    try:
-        Kalman_Filter.update_filter(6.0, 10.0)
-    except ValueError as e:
-        assert "Invalid value for terminal voltage" in str(e)
-
-    # Test invalid terminal voltage type (not a float)
-    try:
-        Kalman_Filter.update_filter("3.7", 10.0)
-    except TypeError as e:
-        assert "Invalid type for measured_Ut" in str(e)
+import pytest
+import numpy as np
+from unittest.mock import Mock
+from physics.models.battery import FilteredBatteryModel, KalmanFilterConfig
 
 
+@pytest.fixture
+def mock_config():
+    # Mock the battery model config
+    battery_model_config = Mock()
+    battery_model_config.Q_total = 3600.0
+
+    battery_model_config.get_Uoc = lambda soc: 3.5 + 0.5 * soc
+    battery_model_config.get_R_0 = lambda soc: 0.01 + 0.005 * soc
+    battery_model_config.get_R_P = lambda soc: 0.02 + 0.002 * soc
+    battery_model_config.get_C_P = lambda soc: 1000.0 + 100.0 * soc
+
+    # Mock the full filtered battery model config
+    config = Mock()
+    config.battery_model_config = battery_model_config
+    config.state_covariance_matrix = np.eye(2) * 0.01
+    config.process_noise_matrix = np.eye(2) * 1e-6
+    config.measurement_noise_vector = np.array([[0.001]])
+
+    return config
+
+
+def test_initialization(mock_config):
+    model = FilteredBatteryModel(mock_config, initial_SOC=0.9, initial_Uc=0.1)
+    assert np.isclose(model.SOC, 0.9)
+    assert np.isclose(model.Uc, 0.1)
+    assert model.Ut == 0
+
+
+def test_predict_then_update_changes_state(mock_config):
+    model = FilteredBatteryModel(mock_config)
+    SOC_before = model.SOC
+    Uc_before = model.Uc
+
+    # Run a prediction and update step
+    model.predict_then_update(measured_Ut=3.7, current=2.0, time_step=1.0)
+
+    SOC_after = model.SOC
+    Uc_after = model.Uc
+
+    # Ensure state is updated
+    assert not np.isclose(SOC_before, SOC_after)
+    assert not np.isclose(Uc_before, Uc_after)
+
+
+def test_failure(mock_config):
+    with pytest.raises(AssertionError):
+        model = FilteredBatteryModel(mock_config, initial_SOC=1.5)
+
+    with pytest.raises(AssertionError):
+        model = FilteredBatteryModel(mock_config, initial_SOC=-0.2)
+
+    with pytest.raises(AssertionError):
+        model = FilteredBatteryModel(mock_config, initial_SOC=1.0, alpha=-0.1)
+
+    with pytest.raises(AssertionError):
+        model = FilteredBatteryModel(mock_config, initial_SOC=1.0, alpha=1.1)
+
+
+def test_measurement_function_and_jacobian_shape(mock_config):
+    model = FilteredBatteryModel(mock_config)
+    x = np.array([0.8, 0.05])
+    H = model._measurement_jacobian(x)
+    z = model._measurement_function(x)
+
+    assert H.shape == (1, 2)
+    assert isinstance(z, float)

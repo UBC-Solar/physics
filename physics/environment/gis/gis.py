@@ -1,6 +1,6 @@
 import logging
 import math
-import core
+import physics_rs
 import numpy as np
 import sys
 
@@ -81,7 +81,7 @@ class GIS(BaseGIS):
         :rtype: np.ndarray
 
         """
-        return core.closest_gis_indices_loop(distances, self.path_distances)
+        return physics_rs.closest_gis_indices_loop(distances, self.path_distances)
 
     def calculate_driving_speeds(
             self,
@@ -108,7 +108,7 @@ class GIS(BaseGIS):
         :return: A simulation-time array of driving speeds in m/s, or an error if there weren't enough
             laps provided to fill the entire simulation time.
         """
-        return core.get_driving_speeds(
+        return physics_rs.get_driving_speeds(
             np.array(average_lap_speeds).astype(np.float64),
             simulation_dt,
             np.array(driving_allowed).astype(bool),
@@ -120,7 +120,7 @@ class GIS(BaseGIS):
     def _python_calculate_closest_gis_indices(distances, path_distances):
         """
 
-        Python implementation of rust core.closest_gis_indices_loop. See parent function for documentation details.
+        Python implementation of use_compiled core.closest_gis_indices_loop. See parent function for documentation details.
 
         """
 
