@@ -1,46 +1,66 @@
-from physics.models.battery import BatteryModelConfig, load_battery_config
-from physics.models.battery.battery_model import BatteryModel
-import pathlib
 import numpy as np
+import pandas as pd
+import pathlib
 import matplotlib.pyplot as plt
-import time
+from physics.models.battery import EquivalentCircuitBatteryModel, BatteryModelConfig, load_battery_config
 
 
-if __name__ == "__main__":
-    config_file:BatteryModelConfig = pathlib.Path(__file__).parent / "battery_config.toml"
-    battery_config = load_battery_config(str(config_file))
+# This test requires a voltage.csv and current.csv in the same directory to run
+def csv_to_timeseries_tuples(csv_file):
+    path = pathlib.Path(__file__).parent / csv_file
+    df = pd.read_csv(path)
+    df['Time'] = pd.to_datetime(df['Time'])
+    return np.array(list(zip(df['Time'].dt.to_pydatetime(), df['Value'])))
 
-    battery_model = BatteryModel(battery_config)
 
-    hppc_pulse = np.concat((
-        np.full(100, fill_value=0.0),
-        np.full(10, fill_value=-80.0),
-        np.full(360, fill_value=0.0),
-        np.full(10, fill_value=20.0),
-        np.full(60, fill_value=0.0),
-        np.full(360, fill_value=-80.0),
-        np.full(3600, fill_value=0.0),
-    ))
-
-    power_array = np.tile(hppc_pulse, 10)
-
-    # Start the timer
-    start_time = time.time()
-
-    # Function call
-    soc, voltage = battery_model.update_array(power_array, 1.0, rust=True)
-
-    # End the timer
-    end_time = time.time()
-
-    # Calculate and print the duration
-    print(f"The function call took {end_time - start_time:.6f} seconds.")
-
+def plot_results(soc_array, predicted_ut_array, voltage_data, window=None):
     fig, ax = plt.subplots()
 
-    ax2 = ax.twinx()
+    if window is None:
+        window = slice(0, len(predicted_ut_array), 1)
 
-    ax.plot(voltage)
-    # ax2.plot(hppc_pulse)
-    plt.savefig("data.png")
+    ax.plot(predicted_ut_array, label=r"Predicted $U_t$", color="tab:red")
+    ax.plot(voltage_data, label=r"Measured $U_t$", color="tab:orange")
+    ax.set_ylim(75, 140)
+    ax.set_xticks([])
+    ax.set_ylabel("Voltage")
+
+    ax2 = ax.twinx()
+    ax2.plot(soc_array[window], color="tab:blue", label="Filtered SOC")
+    ax2.set_ylabel("SOC")
+
+    ax.legend(loc='upper right')
+    ax2.legend(loc='lower left')
+
+    plt.title("Simulation of first-order Thevenin equivalent battery model")
     plt.show()
+
+
+def battery_model():
+    voltage_data = csv_to_timeseries_tuples('voltage.csv')
+    current_data = csv_to_timeseries_tuples('current.csv')
+
+    # This dataset has 0.1s period between measurements
+    time_difference = 0.1
+
+    current_raw = current_data[:, 1]
+    current_error = np.polyval([-0.00388, 1547], current_raw * 1000.0)
+
+    current = current_raw - (current_error / 1000)
+    voltage = voltage_data[:, 1]
+
+    energy_array = current * voltage * time_difference
+
+    model_config: BatteryModelConfig = load_battery_config(pathlib.Path(__file__).parent / 'battery_config.toml')
+
+    battery_model = EquivalentCircuitBatteryModel(model_config, state_of_charge=1.04)
+
+    soc_array, predicted_ut_array = battery_model.update_array(tick=time_difference, current_array=np.array(-current, dtype=float))
+    # soc_array, predicted_ut_array = battery_model.update_array(tick=time_difference, delta_energy_array=np.array(-energy_array, dtype=float))
+
+    # example usage
+    plot_results(soc_array, predicted_ut_array, voltage)
+
+
+if __name__ == '__main__':
+    battery_model()

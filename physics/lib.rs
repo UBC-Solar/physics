@@ -1,5 +1,5 @@
 use numpy::ndarray::ArrayViewD;
-use numpy::{PyArray, PyArrayDyn, PyReadwriteArrayDyn, PyReadonlyArray1, PyArray1};
+use numpy::{PyArray, PyArrayDyn, PyReadwriteArrayDyn, PyReadwriteArray1, PyReadonlyArray1, PyArray1};
 use pyo3::prelude::*;
 use pyo3::types::PyModule;
 
@@ -7,7 +7,7 @@ pub mod environment;
 pub mod models;
 use crate::environment::gis::gis::{rust_closest_gis_indices_loop, get_driving_speeds};
 use crate::environment::meteorology::meteorology::{rust_calculate_array_ghi_times, rust_closest_weather_indices_loop, rust_weather_in_time};
-use crate::models::battery::battery::update_battery_array;
+use crate::models::battery::battery::update_battery_state;
 
 fn constrain_speeds(speed_limits: ArrayViewD<f64>,  speeds: ArrayViewD<f64>, tick: i32) -> Vec<f64> {
     let mut distance: f64 = 0.0;
@@ -25,7 +25,7 @@ fn constrain_speeds(speed_limits: ArrayViewD<f64>,  speeds: ArrayViewD<f64>, tic
 
 /// A Python module implemented in Rust. The name of this function is the Rust module name!
 #[pymodule]
-#[pyo3(name = "core")]
+#[pyo3(name = "physics_rs")]
 fn rust_simulation(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m)]
         #[pyo3(name = "constrain_speeds")]
@@ -95,35 +95,43 @@ fn rust_simulation(_py: Python, m: &PyModule) -> PyResult<()> {
     }
 
     #[pyfn(m)]
-    #[pyo3(name = "update_battery_array")]
-    fn update_battery_array_py<'py>(
+    #[pyo3(name = "update_battery_state")]
+    fn update_battery_state_py<'py>(
         py: Python<'py>,
-        python_delta_energy_array: PyReadwriteArrayDyn<'py, f64>,
+        python_energy_or_current_array: PyReadwriteArray1<'py, f64>,
         time_step: f64,
         initial_state_of_charge: f64,
         initial_polarization_potential: f64,
-        polarization_resistance: f64,
-        python_internal_resistance_coeffs: PyReadwriteArrayDyn<'py, f64>,
-        python_open_circuit_voltage_coeffs: PyReadwriteArrayDyn<'py, f64>,
-        time_constant: f64,
+        python_internal_resistance_lookup: PyReadwriteArray1<'py, f64>,
+        python_open_circuit_voltage_lookup: PyReadwriteArray1<'py, f64>,
+        python_polarization_resistance_lookup: PyReadwriteArray1<'py, f64>,
+        python_polarization_capacitance_lookup: PyReadwriteArray1<'py, f64>,
         nominal_charge_capacity: f64,
-    ) -> (&'py PyArrayDyn<f64>, &'py PyArrayDyn<f64>) {
-        let delta_energy_array = python_delta_energy_array.as_array();
-        let internal_resistance_coeffs = python_internal_resistance_coeffs.as_array();
-        let open_circuit_voltage_coeffs = python_open_circuit_voltage_coeffs.as_array();
-        let (soc_array, voltage_array): (Vec<f64>, Vec<f64>) = update_battery_array(
-            delta_energy_array,
+        is_power: bool,
+        quantization_step: f64,
+        min_soc: f64,
+    ) -> (&'py PyArray1<f64>, &'py PyArray1<f64>) {
+        let energy_or_current_array = python_energy_or_current_array.as_array();
+        let internal_resistance_lookup = python_internal_resistance_lookup.as_array();
+        let open_circuit_voltage_lookup = python_open_circuit_voltage_lookup.as_array();
+        let polarization_resistance_lookup = python_polarization_resistance_lookup.as_array();
+        let polarization_capacitance_lookup = python_polarization_capacitance_lookup.as_array();
+        let (soc_array, voltage_array): (Vec<f64>, Vec<f64>) = update_battery_state(
+            energy_or_current_array,
             time_step,
             initial_state_of_charge,
             initial_polarization_potential,
-            polarization_resistance,
-            internal_resistance_coeffs,
-            open_circuit_voltage_coeffs,
-            time_constant,
+            internal_resistance_lookup,
+            open_circuit_voltage_lookup,
+            polarization_resistance_lookup,
+            polarization_capacitance_lookup,
             nominal_charge_capacity,
+            is_power,
+            quantization_step,
+            min_soc
         );
-        let py_soc_array = PyArray::from_vec(py, soc_array).to_dyn();
-        let py_voltage_array = PyArray::from_vec(py, voltage_array).to_dyn();
+        let py_soc_array = PyArray::from_vec(py, soc_array);
+        let py_voltage_array = PyArray::from_vec(py, voltage_array);
         (py_soc_array, py_voltage_array)
     }
 

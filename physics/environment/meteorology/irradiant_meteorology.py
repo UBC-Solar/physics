@@ -1,7 +1,7 @@
 from physics.environment.meteorology.base_meteorology import BaseMeteorology
 from physics.environment.gis.gis import calculate_path_distances
 import numpy as np
-import core
+import physics_rs
 from typing import Optional
 
 
@@ -11,6 +11,7 @@ class IrradiantMeteorology(BaseMeteorology):
     solar irradiance data, but not cloud cover.
 
     """
+
     def __init__(self, race, weather_forecasts):
         self._race = race
         self._raw_weather_data = weather_forecasts
@@ -53,7 +54,7 @@ class IrradiantMeteorology(BaseMeteorology):
         # contains the average distance between two consecutive elements in the cumulative_weather_path_distances array
         average_distances = np.abs(np.diff(cumulative_weather_path_distances) / 2)
 
-        self._weather_indices = core.closest_weather_indices_loop(cumulative_distances, average_distances)
+        self._weather_indices = physics_rs.closest_weather_indices_loop(cumulative_distances, average_distances)
 
     def temporally_localize(self, unix_timestamps, start_time, tick) -> None:
         """
@@ -76,8 +77,9 @@ class IrradiantMeteorology(BaseMeteorology):
         :returns: a SolcastEnvironment object with time_dt, latitude, longitude, wind_speed, wind_direction, and ghi.
         :rtype: SolcastEnvironment
         """
-        forecasts_array = core.weather_in_time(unix_timestamps.astype(np.int64), self._weather_indices.astype(np.int64),
-                                               self._raw_weather_data, 0)
+        forecasts_array = physics_rs.weather_in_time(unix_timestamps.astype(np.int64),
+                                                     self._weather_indices.astype(np.int64),
+                                                     self._raw_weather_data, 0)
 
         self._time_dt = forecasts_array[:, 0]
         self._latitude = forecasts_array[:, 1]
@@ -103,5 +105,3 @@ class IrradiantMeteorology(BaseMeteorology):
 
         """
         return self.solar_irradiance
-
-
