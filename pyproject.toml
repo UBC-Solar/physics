@@ -66,7 +66,7 @@ dependencies = [
     "more-itertools==10.4.0",
     "nh3==0.2.18",
     "numba",
-    "numpy==2.0.1",
+    "numpy>=2",
     "pkginfo==1.10.0",
     "Pygments==2.18.0",
     "readme_renderer==44.0",
