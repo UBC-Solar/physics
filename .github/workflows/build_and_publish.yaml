@@ -60,6 +60,8 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
 
       # We run `python -m setuptools_scm` and `git status` for debugging purposes, to verify that
       # setuptools_scm is properly identifying the version based on the tag
