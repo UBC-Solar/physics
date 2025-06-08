@@ -59,9 +59,11 @@ jobs:
           fetch-depth: 0  # Required to fetch full history including tags, so setuptools_scm can determine version
 
       - name: Enable QEMU emulation
+        if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v2
 
       - name: Set up Docker Buildx
+        if: runner.os == 'Linux'
         uses: docker/setup-buildx-action@v2
 
       - name: Set up Python
