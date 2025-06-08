@@ -108,4 +108,3 @@ archs = "auto"  # Automatically detects architectures (e.g., x86, ARM)
 skip = ["pp*", "*-musllinux_*", "*-win32", "*i686"]  # Skip PyPy (only want CPython), Musllinux, win32, i686 wheels
 manylinux-x86_64-image = "manylinux2014"
 manylinux-i686-image = "manylinux2014"
-manylinux-aarch64-image = "manylinux2014"
