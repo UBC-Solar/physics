@@ -109,5 +109,6 @@ skip = ["pp*", "*-musllinux_*", "*-win32", "*i686"]  # Skip PyPy (only want CPyt
 manylinux-x86_64-image = "manylinux2014"
 manylinux-i686-image = "manylinux2014"
 
-[tool.cibuildwheel.linux.aarch64]
+[[tool.cibuildwheel.overrides]]
+select = "*manylinux_aarch64*"
 build = ["cp312-manylinux*"]
