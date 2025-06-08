@@ -98,13 +98,37 @@ jobs:
 
       # Now, we use cibuildwheel to build all the wheels that we want for the platforms we defined in matrix.os
       # It will build wheels for Python versions that are allowed based on our pyproject.toml
-      - name: Build wheels
+      - name: Build Wheels (Windows)
+        if: runner.os == 'Windows'
+        run: cibuildwheel --output-dir dist
+        env:
+          CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH" MACOSX_DEPLOYMENT_TARGET="10.12"'
+          CIBW_ENVIRONMENT_WINDOWS: 'PATH="$UserProfile\.cargo\bin;$PATH"'
+          CIBW_BEFORE_BUILD: >
+            pip install -U setuptools-rust &&
+            rustup default nightly &&
+            rustup show
+
+      - name: Build Wheels (MacOS)
+        if: runner.os == 'macOS'
         run: cibuildwheel --output-dir dist
         env:
           CIBW_ARCHS_MACOS: "x86_64 arm64"  # Make sure both x86_64 and arm64 wheels are built for macOS
-          CIBW_ARCHS_LINUX: "x86_64 aarch64"  # Make sure both x86_64 and arm64 wheels are built for Linux
           CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH" MACOSX_DEPLOYMENT_TARGET="10.12"'
-          CIBW_ENVIRONMENT_WINDOWS: 'PATH="$UserProfile\.cargo\bin;$PATH"'
+          CIBW_BEFORE_BUILD: >
+            pip install -U setuptools-rust &&
+            rustup default nightly &&
+            rustup show
+
+      - name: Build Wheels (Linux)
+        run: cibuildwheel --output-dir dist
+        if: runner.os == 'Linux'
+        env:
+          # build both arches on Linux…
+          CIBW_ARCHS_LINUX: "x86_64 aarch64"
+          # …but only Python 3.12 on the aarch64 arch:
+          CIBW_BUILD_LINUX_AARCH64: "cp312-manylinux*"
+          CIBW_ENVIRONMENT: 'PATH="$HOME/.cargo/bin:$PATH" MACOSX_DEPLOYMENT_TARGET="10.12"'
           CIBW_BEFORE_BUILD: >
             pip install -U setuptools-rust &&
             rustup default nightly &&
