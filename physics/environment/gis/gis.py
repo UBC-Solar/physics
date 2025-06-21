@@ -106,8 +106,7 @@ class GIS(BaseGIS):
             are allowed to drive, and `False` is when we are not. Requires that (at least) the first element is
             `False` due to the race beginning in the morning before we are allowed to drive.
         :param idle_time: The length of time to pause driving upon processing a "0m/s" average speed.
-        :param laps_per_speed: The amount of laps that we expect to use with each speed value; it's essentially
-            a buffer so that get_driving_speeds does not throw an error.
+        :param laps_per_speed: The amount of laps that we expect to use with each speed value.
         :return: A simulation-time array of driving speeds in m/s, or an error if there weren't enough
             laps provided to fill the entire simulation time.
         """
