@@ -317,6 +317,7 @@ def test_gis():
         average_lap_speeds=[speed, 0],
         driving_allowed=driving_allowed,
         idle_time=idle_time,
-        simulation_dt=1)
+        simulation_dt=1,
+        laps_per_speed = 1)
 
     assert np.allclose(driving_speeds, np.array([[0] * 10 + [speed] * time_to_complete_lap + [0] * idle_time + [0] * 10]), atol=1e-3)
