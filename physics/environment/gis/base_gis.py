@@ -33,6 +33,7 @@ class BaseGIS(ABC):
             average_lap_speeds: ArrayLike,
             simulation_dt: int,
             driving_allowed: ArrayLike,
-            idle_time: int
+            idle_time: int,
+            laps_per_speed: int
     ) -> NDArray[float]:
         raise NotImplementedError
