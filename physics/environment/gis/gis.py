@@ -115,7 +115,7 @@ class GIS(BaseGIS):
             np.array(average_lap_speeds).astype(np.float64),
             simulation_dt,
             np.array(driving_allowed).astype(bool),
-            self.path_length,
+            self.path_length  * laps_per_speed,
             idle_time
         )
 
