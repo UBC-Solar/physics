@@ -24,6 +24,11 @@ class BaseGIS(ABC):
     def get_path(self) -> np.ndarray:
         raise NotImplementedError
 
+    @staticmethod
+    @abstractmethod
+    def calculate_speeds_and_position(speeds_kmh: NDArray, track_speeds, path_distances, dt):
+        raise NotImplementedError
+
     @abstractmethod
     def calculate_current_heading_array(self) -> np.ndarray:
         raise NotImplementedError

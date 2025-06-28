@@ -5,7 +5,7 @@ use pyo3::types::PyModule;
 
 pub mod environment;
 pub mod models;
-use crate::environment::gis::gis::{rust_closest_gis_indices_loop, get_driving_speeds};
+use crate::environment::gis::gis::{rust_closest_gis_indices_loop, get_driving_speeds, calculate_speeds_and_position};
 use crate::environment::meteorology::meteorology::{rust_calculate_array_ghi_times, rust_closest_weather_indices_loop, rust_weather_in_time};
 use crate::models::battery::battery::update_battery_state;
 
@@ -133,6 +133,29 @@ fn rust_simulation(_py: Python, m: &PyModule) -> PyResult<()> {
         let py_soc_array = PyArray::from_vec(py, soc_array);
         let py_voltage_array = PyArray::from_vec(py, voltage_array);
         (py_soc_array, py_voltage_array)
+    }
+
+    #[pyfn(m)]
+    #[pyo3(name = "calculate_speeds_and_position")]
+    fn calculate_speeds_and_position_py<'py>(
+        py: Python<'py>,
+        speeds_kmh_py: PyReadwriteArray1<'py, f64>,
+        path_distances_py: PyReadwriteArray1<'py, f64>,
+        track_speeds_py: PyReadwriteArray1<'py, f64>,
+        simulation_dt: u32,
+    ) -> (&'py PyArray1<usize>, &'py PyArray1<f64>) {
+        let speeds_kmh = speeds_kmh_py.as_array();
+        let path_distances = path_distances_py.as_array();
+        let track_speeds = track_speeds_py.as_array();
+        let (gis_indices, actual_speeds_kmh): (Vec<usize>, Vec<f64>) = calculate_speeds_and_position(
+            speeds_kmh,
+            path_distances,
+            track_speeds,
+            simulation_dt,
+        );
+        let gis_indices_py = PyArray::from_vec(py, gis_indices);
+        let actual_speeds_kmh_py = PyArray::from_vec(py, actual_speeds_kmh);
+        (gis_indices_py, actual_speeds_kmh_py)
     }
 
     #[pyfn(m)]

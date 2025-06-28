@@ -34,21 +34,9 @@ class GIS(BaseGIS):
         self.path_time_zones = route_data['time_zones']
         self.num_unique_coords = route_data['num_unique_coords']
 
-        if current_coord is not None:
-            if not np.array_equal(current_coord, origin_coord):
-                logging.warning("Current position is not origin position. Modifying path data.\n")
-
-                # We need to find the closest coordinate along the path to the vehicle position
-                current_coord_index = GIS._find_closest_coordinate_index(current_coord, self.path)
-
-                # All coords before the current coordinate should be discarded
-                self.path = self.path[current_coord_index:]
-                self.path_elevations = self.path_elevations[current_coord_index:]
-                self.path_time_zones = self.path_time_zones[current_coord_index:]
-
-        self.path_distances = calculate_path_distances(self.path)
+        self.path_distances = calculate_path_distances(self.path)[:self.num_unique_coords]
         self.path_length = np.cumsum(calculate_path_distances(self.path[:self.num_unique_coords]))[-1]
-        self.path_gradients = calculate_path_gradients(self.path_elevations, self.path_distances)
+        self.path_gradients = calculate_path_gradients(self.path_elevations[:self.num_unique_coords], self.path_distances)
 
     @staticmethod
     def process_KML_file(route_file):
@@ -82,6 +70,51 @@ class GIS(BaseGIS):
 
         """
         return physics_rs.closest_gis_indices_loop(distances, self.path_distances)
+
+    def calculate_speeds_and_position(self, speeds_kmh: NDArray, track_speeds: NDArray, dt: int):
+        try:
+            return physics_rs.calculate_speeds_and_position(speeds_kmh, self.path_distances, track_speeds, dt)
+
+        except Exception:
+            return self._py_calculate_speeds_and_position(speeds_kmh, track_speeds, dt)
+
+    def _py_calculate_speeds_and_position(self, speeds_kmh: NDArray, track_speeds: NDArray, dt: int):
+        """
+        Given the original, lap-averaged `speeds_kmh` and an array of speed deviations in km/h for each track index,
+        compute the position and actual speed as simulation-time arrays.
+
+        :param speeds_kmh: Lap-averaged speeds in km/h.
+        :param track_speeds: A speed deviation in km/h for each track index. Expects the mean to be at 0.
+        :param dt:
+        :return:
+        """
+        result = []
+        actual_speeds_kmh = []
+
+        with tqdm(total=len(speeds_kmh), file=sys.stdout, desc="Calculating closest GIS indices") as pbar:
+            distance_travelled = 0
+            track_index = 0
+
+            for lap_speed in speeds_kmh:
+                if lap_speed > 0:
+                    actual_speed = lap_speed + track_speeds[track_index]
+                else:
+                    actual_speed = 0
+
+                actual_speeds_kmh.append(actual_speed)
+                distance_travelled += actual_speed * dt
+
+                while distance_travelled > self.path_distances[track_index]:
+                    distance_travelled -= self.path_distances[track_index]
+                    track_index += 1
+
+                    if track_index >= len(self.path_distances):
+                        track_index = 0
+
+                result.append(track_index)
+                pbar.update(1)
+
+        return np.array(result), np.array(actual_speeds_kmh)
 
     def calculate_driving_speeds(
             self,
