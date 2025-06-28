@@ -81,7 +81,39 @@ class GIS(BaseGIS):
         :rtype: np.ndarray
 
         """
-        return physics_rs.closest_gis_indices_loop(distances, self.path_distances)
+        return self._python_calculate_closest_gis_indices(distances)
+        # return physics_rs.closest_gis_indices_loop(distances, self.path_distances)
+
+    @staticmethod
+    def calculate_speeds_and_position(speeds_kmh: NDArray, track_speeds, path_distances, dt):
+        result = []
+        actual_speeds_kmh = []
+
+        with tqdm(total=len(speeds_kmh), file=sys.stdout, desc="Calculating closest GIS indices") as pbar:
+            distance_travelled = 0
+            track_index = 0
+
+            for lap_speed in speeds_kmh:
+                if lap_speed > 0:
+                    actual_speed = lap_speed + track_speeds[track_index]
+                else:
+                    actual_speed = 0
+
+                actual_speeds_kmh.append(actual_speed)
+                distance_travelled += actual_speed * dt
+
+                while distance_travelled > path_distances[current_coordinate_index]:
+                    distance_travelled -= path_distances[current_coordinate_index]
+                    track_index += 1
+
+                    if current_coordinate_index >= len(path_distances):
+                        current_coordinate_index = 0
+
+                result.append(current_coordinate_index)
+                pbar.update(1)
+
+        return np.array(result), np.array(actual_speeds_kmh)
+
 
     def calculate_driving_speeds(
             self,
