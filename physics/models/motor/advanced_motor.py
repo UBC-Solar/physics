@@ -9,7 +9,7 @@ class AdvancedMotor(BasicMotor):
         super().__init__(**kwargs)
         self.cornering_coefficient = 15  # tuned to Day 1 and 3 FSGP data
 
-    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, coords):
+    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, coords, plotting=False):
         """
         A function which takes in array of elevation, array of wind speed, required
             speed, returns the consumed energy.
@@ -39,8 +39,11 @@ class AdvancedMotor(BasicMotor):
         motor_controller_input_energies = np.where(motor_controller_input_energies > 0,
                                                    motor_controller_input_energies, 0)
 
-        return motor_controller_input_energies, cornering_work, gradients, road_friction_array, drag_forces, g_forces
-
+        if plotting:
+            return motor_controller_input_energies, cornering_work, gradients, road_friction_array, drag_forces, g_forces
+        else:
+            return motor_controller_input_energies
+        
     def calculate_cornering_losses(self, required_speed_kmh, coords, tick):
         """
         Calculate the energy losses due to cornering based on vehicle speed and trajectory.
