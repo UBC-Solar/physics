@@ -1,14 +1,13 @@
-use chrono::{Datelike, NaiveDateTime, Timelike};
-use numpy::ndarray::{s, Array, Array2, ArrayViewD, ArrayViewMut2, ArrayViewMut3, Axis};
-use numpy::{PyArray, PyArrayDyn, PyReadwriteArrayDyn};
+use numpy::ndarray::ArrayViewD;
+use numpy::{PyArray, PyArrayDyn, PyReadwriteArrayDyn, PyReadwriteArray1, PyReadonlyArray1, PyArray1};
 use pyo3::prelude::*;
 use pyo3::types::PyModule;
 
 pub mod environment;
 pub mod models;
-use crate::environment::gis::gis::rust_closest_gis_indices_loop;
-use crate::environment::meteorology::meteorology::{rust_calculate_array_ghi_times, rust_closest_weather_indices_loop, rust_weather_in_time, rust_closest_timestamp_indices};
-use crate::models::battery::battery::update_battery_array;
+use crate::environment::gis::gis::{rust_closest_gis_indices_loop, get_driving_speeds, calculate_speeds_and_position};
+use crate::environment::meteorology::meteorology::{rust_calculate_array_ghi_times, rust_closest_weather_indices_loop, rust_weather_in_time};
+use crate::models::battery::battery::update_battery_state;
 
 fn constrain_speeds(speed_limits: ArrayViewD<f64>,  speeds: ArrayViewD<f64>, tick: i32) -> Vec<f64> {
     let mut distance: f64 = 0.0;
@@ -26,7 +25,7 @@ fn constrain_speeds(speed_limits: ArrayViewD<f64>,  speeds: ArrayViewD<f64>, tic
 
 /// A Python module implemented in Rust. The name of this function is the Rust module name!
 #[pymodule]
-#[pyo3(name = "core")]
+#[pyo3(name = "physics_rs")]
 fn rust_simulation(_py: Python, m: &PyModule) -> PyResult<()> {
     #[pyfn(m)]
         #[pyo3(name = "constrain_speeds")]
@@ -96,36 +95,92 @@ fn rust_simulation(_py: Python, m: &PyModule) -> PyResult<()> {
     }
 
     #[pyfn(m)]
-    #[pyo3(name = "update_battery_array")]
-    fn update_battery_array_py<'py>(
+    #[pyo3(name = "update_battery_state")]
+    fn update_battery_state_py<'py>(
         py: Python<'py>,
-        python_delta_energy_array: PyReadwriteArrayDyn<'py, f64>,
+        python_energy_or_current_array: PyReadwriteArray1<'py, f64>,
         time_step: f64,
         initial_state_of_charge: f64,
         initial_polarization_potential: f64,
-        polarization_resistance: f64,
-        python_internal_resistance_coeffs: PyReadwriteArrayDyn<'py, f64>,
-        python_open_circuit_voltage_coeffs: PyReadwriteArrayDyn<'py, f64>,
-        time_constant: f64,
+        python_internal_resistance_lookup: PyReadwriteArray1<'py, f64>,
+        python_open_circuit_voltage_lookup: PyReadwriteArray1<'py, f64>,
+        python_polarization_resistance_lookup: PyReadwriteArray1<'py, f64>,
+        python_polarization_capacitance_lookup: PyReadwriteArray1<'py, f64>,
         nominal_charge_capacity: f64,
-    ) -> (&'py PyArrayDyn<f64>, &'py PyArrayDyn<f64>) {
-        let delta_energy_array = python_delta_energy_array.as_array();
-        let internal_resistance_coeffs = python_internal_resistance_coeffs.as_array();
-        let open_circuit_voltage_coeffs = python_open_circuit_voltage_coeffs.as_array();
-        let (soc_array, voltage_array): (Vec<f64>, Vec<f64>) = update_battery_array(
-            delta_energy_array,
+        is_power: bool,
+        quantization_step: f64,
+        min_soc: f64,
+    ) -> (&'py PyArray1<f64>, &'py PyArray1<f64>) {
+        let energy_or_current_array = python_energy_or_current_array.as_array();
+        let internal_resistance_lookup = python_internal_resistance_lookup.as_array();
+        let open_circuit_voltage_lookup = python_open_circuit_voltage_lookup.as_array();
+        let polarization_resistance_lookup = python_polarization_resistance_lookup.as_array();
+        let polarization_capacitance_lookup = python_polarization_capacitance_lookup.as_array();
+        let (soc_array, voltage_array): (Vec<f64>, Vec<f64>) = update_battery_state(
+            energy_or_current_array,
             time_step,
             initial_state_of_charge,
             initial_polarization_potential,
-            polarization_resistance,
-            internal_resistance_coeffs,
-            open_circuit_voltage_coeffs,
-            time_constant,
+            internal_resistance_lookup,
+            open_circuit_voltage_lookup,
+            polarization_resistance_lookup,
+            polarization_capacitance_lookup,
             nominal_charge_capacity,
+            is_power,
+            quantization_step,
+            min_soc
         );
-        let py_soc_array = PyArray::from_vec(py, soc_array).to_dyn();
-        let py_voltage_array = PyArray::from_vec(py, voltage_array).to_dyn();
+        let py_soc_array = PyArray::from_vec(py, soc_array);
+        let py_voltage_array = PyArray::from_vec(py, voltage_array);
         (py_soc_array, py_voltage_array)
+    }
+
+    #[pyfn(m)]
+    #[pyo3(name = "calculate_speeds_and_position")]
+    fn calculate_speeds_and_position_py<'py>(
+        py: Python<'py>,
+        speeds_kmh_py: PyReadwriteArray1<'py, f64>,
+        path_distances_py: PyReadwriteArray1<'py, f64>,
+        track_speeds_py: PyReadwriteArray1<'py, f64>,
+        simulation_dt: u32,
+    ) -> (&'py PyArray1<usize>, &'py PyArray1<f64>) {
+        let speeds_kmh = speeds_kmh_py.as_array();
+        let path_distances = path_distances_py.as_array();
+        let track_speeds = track_speeds_py.as_array();
+        let (gis_indices, actual_speeds_kmh): (Vec<usize>, Vec<f64>) = calculate_speeds_and_position(
+            speeds_kmh,
+            path_distances,
+            track_speeds,
+            simulation_dt,
+        );
+        let gis_indices_py = PyArray::from_vec(py, gis_indices);
+        let actual_speeds_kmh_py = PyArray::from_vec(py, actual_speeds_kmh);
+        (gis_indices_py, actual_speeds_kmh_py)
+    }
+
+    #[pyfn(m)]
+    #[pyo3(name = "get_driving_speeds")]
+    fn py_get_driving_speeds<'py>(
+        py: Python<'py>,
+        py_average_speeds: PyReadonlyArray1<'py, f64>,            // Average speeds in m/s
+        simulation_dt: i64,                                       // Time step in seconds
+        py_driving_allowed_boolean: PyReadonlyArray1<'py, bool>,  // Simulation-time boolean array
+        track_length: f64,                                        // Track length in meters
+        idle_time: i64                                            // Time to idle in seconds
+    ) -> PyResult<&'py PyArray1<f64>> {
+        let average_speeds = py_average_speeds.as_array();
+        let driving_allowed_boolean = py_driving_allowed_boolean.as_array();
+
+        match get_driving_speeds(
+            average_speeds,
+            simulation_dt,
+            driving_allowed_boolean,
+            track_length,
+            idle_time
+        ) {
+            Ok(driving_speeds) => Ok(PyArray1::from_vec(py, driving_speeds)),
+            Err(error) => Err(pyo3::exceptions::PyValueError::new_err(error))
+        }
     }
 
     Ok(())

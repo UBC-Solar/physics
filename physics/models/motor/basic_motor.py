@@ -6,7 +6,7 @@ from physics.models.constants import ACCELERATION_G, AIR_DENSITY
 
 
 class BasicMotor(BaseMotor):
-    def __init__(self, vehicle_mass, road_friction, tire_radius, vehicle_frontal_area, drag_coefficient):
+    def __init__(self, vehicle_mass, road_friction, tire_radius, vehicle_frontal_area, drag_coefficient, **kwargs):
         super().__init__()
 
         # Instantaneous voltage supplied by the battery to the motor controller

@@ -2,7 +2,7 @@ from physics.environment.meteorology.base_meteorology import BaseMeteorology
 from physics.environment.gis.gis import calculate_path_distances
 import numpy as np
 from numba import jit
-import core
+import physics_rs
 from typing import Optional
 import datetime
 
@@ -70,7 +70,7 @@ class CloudedMeteorology(BaseMeteorology):
         # contains the average distance between two consecutive elements in the cumulative_weather_path_distances array
         average_distances = np.abs(np.diff(cumulative_weather_path_distances) / 2)
 
-        return core.closest_weather_indices_loop(cumulative_distances, average_distances)
+        return physics_rs.closest_weather_indices_loop(cumulative_distances, average_distances)
 
     def temporally_localize(self, unix_timestamps, start_time, tick) -> None:
         """
@@ -96,7 +96,7 @@ class CloudedMeteorology(BaseMeteorology):
         :rtype: np.ndarray
 
         """
-        weather_data = core.weather_in_time(unix_timestamps.astype(np.int64), self._weather_indices.astype(np.int64), self._weather_forecast, 4)
+        weather_data = physics_rs.weather_in_time(unix_timestamps.astype(np.int64), self._weather_indices.astype(np.int64), self._weather_forecast, 4)
         # roll_by_tick = int(3600 / tick) * (24 + start_hour - hour_from_unix_timestamp(weather_data[0, 2]))
         # weather_data = np.roll(weather_data, -roll_by_tick, 0)
 
@@ -124,7 +124,7 @@ class CloudedMeteorology(BaseMeteorology):
         :rtype: np.ndarray
 
         """
-        day_of_year, local_time = core.calculate_array_ghi_times(local_times)
+        day_of_year, local_time = physics_rs.calculate_array_ghi_times(local_times)
 
         ghi = self._calculate_GHI(coords[:, 0], coords[:, 1], time_zones,
                                   day_of_year, local_time, elevations, self._cloud_cover)
