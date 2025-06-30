@@ -7,9 +7,9 @@ from physics.models.motor import BasicMotor
 class AdvancedMotor(BasicMotor):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.cornering_coefficient = 15  # tuned to Day 1 and 3 FSGP data
+        self.cornering_coefficient = 30  # tuned to Day 1 and 3 FSGP data
 
-    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, coords):
+    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, coords, plotting=False):
         """
         A function which takes in array of elevation, array of wind speed, required
             speed, returns the consumed energy.
@@ -19,11 +19,11 @@ class AdvancedMotor(BasicMotor):
         :param np.ndarray wind_speeds: (float[N]) speeds of wind in m/s, where > 0 means against the direction of the vehicle
         :param float tick: length of 1 update cycle in seconds
         :param np.ndarray coords: ([float[N,2]) The lat,lon coordinate  of the car at each tick
-        :returns: (float[N]) energy expended by the motor at every tick
+        :returns: (float[N] , float[N,3]) energy expended by the motor at every tick
         :rtype: np.ndarray
 
         """
-        net_force, required_angular_speed_rads = self.calculate_net_force(required_speed_kmh, wind_speeds, gradients)
+        net_force, required_angular_speed_rads, road_friction_array, drag_forces, g_forces = self.calculate_net_force(required_speed_kmh, wind_speeds, gradients)
 
         cornering_work = self.calculate_cornering_losses(required_speed_kmh, coords, tick)
 
@@ -39,8 +39,11 @@ class AdvancedMotor(BasicMotor):
         motor_controller_input_energies = np.where(motor_controller_input_energies > 0,
                                                    motor_controller_input_energies, 0)
 
-        return motor_controller_input_energies
-
+        if plotting:
+            return motor_controller_input_energies, cornering_work, gradients, road_friction_array, drag_forces, g_forces
+        else:
+            return motor_controller_input_energies
+        
     def calculate_cornering_losses(self, required_speed_kmh, coords, tick):
         """
         Calculate the energy losses due to cornering based on vehicle speed and trajectory.
