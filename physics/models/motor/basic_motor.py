@@ -6,7 +6,7 @@ from physics.models.constants import ACCELERATION_G, AIR_DENSITY
 
 
 class BasicMotor(BaseMotor):
-    def __init__(self, vehicle_mass, road_friction, tire_radius, vehicle_frontal_area, drag_coefficient, inertial_force_coefficient=1.0, drag2=1.0, **kwargs):
+    def __init__(self, vehicle_mass, road_friction, tire_radius, vehicle_frontal_area, drag_coefficient, inertial_force_coefficient=1.0, **kwargs):
         super().__init__()
 
         # Instantaneous voltage supplied by the battery to the motor controller
@@ -21,7 +21,6 @@ class BasicMotor(BaseMotor):
         self.road_friction = road_friction
         self.tire_radius = tire_radius
         self.inertial_force_coefficient = inertial_force_coefficient
-        self.drag2 = drag2
 
         self.air_density = AIR_DENSITY
         self.vehicle_frontal_area = vehicle_frontal_area
@@ -123,7 +122,7 @@ class BasicMotor(BaseMotor):
         required_angular_speed_rads = required_speed_ms / self.tire_radius
 
         drag_forces = 0.5 * self.air_density * (
-                ((required_speed_ms + wind_speeds) * self.drag2) ** 2) * self.drag_coefficient * self.vehicle_frontal_area
+                (required_speed_ms + wind_speeds) ** 2) * self.drag_coefficient * self.vehicle_frontal_area
 
         angles = np.arctan(gradients)
         g_forces = self.vehicle_mass * self.acceleration_g * np.sin(angles)
