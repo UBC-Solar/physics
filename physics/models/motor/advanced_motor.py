@@ -5,9 +5,9 @@ from physics.models.motor import BasicMotor
 
 
 class AdvancedMotor(BasicMotor):
-    def __init__(self, **kwargs):
+    def __init__(self, cornering_coefficient=15, **kwargs):
         super().__init__(**kwargs)
-        self.cornering_coefficient = 15  # tuned to Day 1 and 3 FSGP data
+        self.cornering_coefficient = cornering_coefficient
 
     def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, coords):
         """
