@@ -130,6 +130,7 @@ class BasicMotor(BaseMotor):
 
         net_force = road_friction_array + drag_forces + g_forces + acceleration_force
 
+        print(acceleration_force)
         return net_force, required_angular_speed_rads
 
     def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, **kwargs):
@@ -196,8 +197,4 @@ def calculate_motor_controller_efficiency(motor_angular_speed, motor_torque_arra
 
 
 
-required_speed_kmh = 40.0
-gradients = 0.0
-winds = 1.0
-tick = 1.0
-energies = BasicMotor.calculate_energy_in(required_speed_kmh, gradients, winds, tick, 1)
+
