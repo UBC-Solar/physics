@@ -53,3 +53,14 @@ class Aeroshell(BaseMotor):
 
 
 
+
+wind_attack_angles = np.array([0.0, 18.0, 36.0])
+wind_speeds = np.full_like(wind_attack_angles, 16.67)
+required_speed_ms = np.zeros_like(wind_speeds)
+
+drag_force = Aeroshell.calculate_drag_force(wind_speeds, wind_attack_angles, required_speed_ms)
+print(drag_force)
+
+
+
+
