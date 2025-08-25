@@ -98,6 +98,3 @@ class AeroshellWithDownForce(Aeroshell):
 
         return down_forces
 
-
-
-
