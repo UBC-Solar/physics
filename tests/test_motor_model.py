@@ -27,7 +27,7 @@ def basic_motor():
 def test_calculate_energy_in_(basic_motor):
     # Define deterministic inputs for the calculate_energy_in method
 
-    required_speed_kmh = np.linspace(0.0, 40.0, num=10)
+    required_speed_kmh = np.linspace(0.0, 40.0, num=10) #even out so that acceleration force is not impacted
 
     gradients = np.zeros_like(required_speed_kmh)
     winds = np.full_like(required_speed_kmh, 1)
