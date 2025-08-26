@@ -4,6 +4,11 @@ from numpy.typing import NDArray
 from physics.models.motor.base_motor import BaseMotor
 from physics.models.constants import AIR_DENSITY
 
+
+from scipy.interpolate import interp1d
+
+
+
 class Aeroshell(BaseMotor):
     def __init__(self):
         super().__init__()
@@ -87,12 +92,19 @@ class AeroshellWithDownForce(Aeroshell):
         }
 
         down_forces = np.zeros_like(wind_speeds, dtype=float)
-        rounded_attack_angles = np.round(wind_attack_angles / 18) * 18
-        unscaled_wind = np.array(list(map(lambda x: angle_to_lift[x], rounded_attack_angles)))
+
+        angles = np.array(list(angle_to_lift.keys()))
+        lifts = np.array(list(angle_to_lift.values()))
+
+        lift_interp = interp1d(angles, lifts, kind="cubic")
+
+
+        #rounded_attack_angles = np.round(wind_attack_angles / 18) * 18
+        wind = np.array(list(map(lambda x: angle_to_lift[x], lift_interp)))
 
         # data from lookup table corresponds to wind speed of 16.667 m/s
-        direction = np.sign(wind_speeds)
-        wind_down_force = direction * unscaled_wind * (wind_speeds ** 2) / (16.667 ** 2)
+
+        wind_down_force = wind * (wind_speeds ** 2) / (16.667 ** 2)
         car_down_force = angle_to_lift[0] * (required_speed_ms ** 2) / (16.667 ** 2)
         down_forces = wind_down_force + car_down_force
 
