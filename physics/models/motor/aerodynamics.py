@@ -93,18 +93,22 @@ class AeroshellWithDownForce(Aeroshell):
 
         down_forces = np.zeros_like(wind_speeds, dtype=float)
 
-        angles = np.array(list(angle_to_lift.keys()))
-        lifts = np.array(list(angle_to_lift.values()))
+        # angles = np.array(list(angle_to_lift.keys()))
+        # lifts = np.array(list(angle_to_lift.values()))
+        #
+        # lift_interp = np.array(interp1d(angles, lifts, kind="cubic"))
 
-        lift_interp = interp1d(angles, lifts, kind="cubic")
 
 
-        #rounded_attack_angles = np.round(wind_attack_angles / 18) * 18
-        wind = np.array(list(map(lambda x: angle_to_lift[x], lift_interp)))
+        rounded_attack_angles = np.round(wind_attack_angles / 18) * 18
+        wind = np.array(list(map(lambda x: angle_to_lift[x], rounded_attack_angles)))
 
         # data from lookup table corresponds to wind speed of 16.667 m/s
 
-        wind_down_force = wind * (wind_speeds ** 2) / (16.667 ** 2)
+        direction = np.sign(wind_speeds)
+
+
+        wind_down_force = direction* wind * (wind_speeds ** 2) / (16.667 ** 2)
         car_down_force = angle_to_lift[0] * (required_speed_ms ** 2) / (16.667 ** 2)
         down_forces = wind_down_force + car_down_force
 
