@@ -5,7 +5,7 @@ from physics.models.motor.base_motor import BaseMotor
 from physics.models.constants import AIR_DENSITY
 
 
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1dM
 
 
 
