@@ -4,9 +4,6 @@ from numpy.typing import NDArray
 from physics.models.motor.base_motor import BaseMotor
 from physics.models.constants import ACCELERATION_G, AIR_DENSITY
 
-from physics.models.motor.aerodynamics import Aeroshell
-from physics.models.motor.aerodynamics import AeroshellWithDownForce
-
 
 #is vehicle_frontal_area used anywhere? as it is not used any more in th edrag calculations
 

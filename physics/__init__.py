@@ -8,7 +8,8 @@ from .models import (
     battery,
     lvs,
     motor,
-    regen
+    regen,
+    aeroshell
 )
 
 from ._version import __version__
