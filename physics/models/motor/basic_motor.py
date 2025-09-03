@@ -2,13 +2,15 @@ import math
 import numpy as np
 from numpy.typing import NDArray
 from physics.models.motor.base_motor import BaseMotor
+from physics.models.aeroshell.aeroshell import Aeroshell
 from physics.models.constants import ACCELERATION_G, AIR_DENSITY
 
 
-#is vehicle_frontal_area used anywhere? as it is not used any more in th edrag calculations
+
+
 
 class BasicMotor(BaseMotor):
-    def __init__(self, vehicle_mass, road_friction, tire_radius, aeroshell):
+    def __init__(self, vehicle_mass, road_friction, tire_radius):
         super().__init__()
 
         # Instantaneous voltage supplied by the battery to the motor controller
@@ -23,12 +25,6 @@ class BasicMotor(BaseMotor):
         self.road_friction = road_friction
         self.tire_radius = tire_radius
         self.air_density = AIR_DENSITY
-        #self.vehicle_frontal_area = vehicle_frontal_area
-
-        #add aeroshell as a parameter, only to be used for drag/down force calculations
-        self.aeroshell = aeroshell
-        #self.friction_force = (self.vehicle_mass * self.acceleration_g * self.road_friction) - not required anymore?
-
         self.e_mc = 0.98  # motor controller efficiency, subject to change
         self.e_m = 0.9  # motor efficiency, subject to change
 
@@ -101,11 +97,11 @@ class BasicMotor(BaseMotor):
 
     def calculate_net_force(self,
                             required_speed_kmh: NDArray,
-                            wind_speeds: NDArray,
-                            gradients: NDArray,
-                            wind_attack_angles: NDArray, #additional parameters considered for aerodynamics class calculations
-                            required_speed_ms: NDArray
-
+                            # wind_speeds: NDArray,
+                            # gradients: NDArray,
+                            # wind_attack_angles: NDArray, #additional parameters considered for aerodynamics class calculations
+                            drag_forces: NDArray,
+                            down_forces:NDArray
                             ) -> tuple[NDArray, NDArray]:
         """
         Calculate the net force on the car, and the required wheel angular velocity.
@@ -123,19 +119,9 @@ class BasicMotor(BaseMotor):
         acceleration_ms2 = np.clip(np.gradient(required_speed_ms), a_min=0, a_max=None)
         acceleration_force = acceleration_ms2 * self.vehicle_mass
         required_angular_speed_rads = required_speed_ms / self.tire_radius
-
-        #drag/down forces component calculations are not necessary
-
-        drag_forces = self.aeroshell.calculate_drag_force(wind_speeds, wind_attack_angles, required_speed_ms )
-
-        down_force = self.aeroshell.calculate_down_force(wind_speeds, wind_attack_angles, required_speed_ms )
-
         angles = np.arctan(gradients)
         g_forces = self.vehicle_mass * self.acceleration_g * np.sin(angles)
-
-
-        road_friction_array = self.road_friction * ((self.vehicle_mass * self.acceleration_g * np.cos(angles))+down_force)
-
+        road_friction_array = self.road_friction * ((self.vehicle_mass * self.acceleration_g * np.cos(angles))+down_forces)
         net_force = road_friction_array + drag_forces + g_forces + acceleration_force
 
         return net_force, required_angular_speed_rads
@@ -199,25 +185,3 @@ def calculate_motor_controller_efficiency(motor_angular_speed, motor_torque_arra
         - (3.126e-10 * motor_angular_speed ** 2 * motor_torque_array ** 2) \
         + (1.708e-09 * motor_angular_speed * motor_torque_array ** 3) \
         - (8.094e-09 * motor_torque_array ** 4)
-
-
-# #example
-#
-# aero = AeroshellWithDownForce()
-# motor = BasicMotor(vehicle_mass=350,
-#         road_friction=0.012,
-#         tire_radius=0.2032,
-#         vehicle_frontal_area= 1.1853,
-#         aeroshell = AeroshellWithDownForce())
-#
-#
-# wind_attack_angles = np.array([0.0, 18.0, 36.0])
-# wind_speeds = np.full_like(wind_attack_angles, 16.67)
-# required_speed_ms = np.zeros_like(wind_speeds)
-#
-# down_forces = motor.aeroshell.calculate_down_force(wind_speeds, wind_attack_angles, required_speed_ms)
-# drag_forces = motor.aeroshell.calculate_drag_force(wind_speeds, wind_attack_angles, required_speed_ms)
-#
-# print("Down forces:", down_forces)
-# print("Drag forces:", drag_forces)
-

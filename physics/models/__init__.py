@@ -3,7 +3,7 @@ from .battery import BasicBattery
 from .lvs import BasicLVS
 from .motor import BasicMotor
 from .regen import BasicRegen
-from .aeroshell import Aeroshell, AeroshellWithDownForce
+from .aeroshell import Aeroshell
 
 __all__ = [
     "BasicArray",
@@ -11,6 +11,5 @@ __all__ = [
     "BasicLVS",
     "BasicMotor",
     "BasicRegen",
-    "Aeroshell",
-    "AeroshellWithDownForce",
+    "Aeroshell"
 ]
