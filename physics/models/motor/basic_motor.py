@@ -6,9 +6,6 @@ from physics.models.aeroshell.aeroshell import Aeroshell
 from physics.models.constants import ACCELERATION_G, AIR_DENSITY
 
 
-
-
-
 class BasicMotor(BaseMotor):
     def __init__(self, vehicle_mass, road_friction, tire_radius):
         super().__init__()
@@ -97,11 +94,9 @@ class BasicMotor(BaseMotor):
 
     def calculate_net_force(self,
                             required_speed_kmh: NDArray,
-                            # wind_speeds: NDArray,
-                            # gradients: NDArray,
-                            # wind_attack_angles: NDArray, #additional parameters considered for aerodynamics class calculations
-                            drag_forces: NDArray,
-                            down_forces:NDArray
+                            gradients: NDArray,
+                            drag_force: NDArray,
+                            down_force:NDArray
                             ) -> tuple[NDArray, NDArray]:
         """
         Calculate the net force on the car, and the required wheel angular velocity.
@@ -121,12 +116,12 @@ class BasicMotor(BaseMotor):
         required_angular_speed_rads = required_speed_ms / self.tire_radius
         angles = np.arctan(gradients)
         g_forces = self.vehicle_mass * self.acceleration_g * np.sin(angles)
-        road_friction_array = self.road_friction * ((self.vehicle_mass * self.acceleration_g * np.cos(angles))+down_forces)
-        net_force = road_friction_array + drag_forces + g_forces + acceleration_force
+        road_friction_array = self.road_friction * ((self.vehicle_mass * self.acceleration_g * np.cos(angles))+down_force)
+        net_force = road_friction_array + drag_force + g_forces + acceleration_force
 
         return net_force, required_angular_speed_rads
 
-    def calculate_energy_in(self, required_speed_kmh, gradients, wind_speeds, tick, **kwargs):
+    def calculate_energy_in(self, required_speed_kmh, gradients, drag_force, down_force, tick, **kwargs):
         """
 
         Create a function which takes in array of elevation, array of wind speed, required
@@ -134,13 +129,12 @@ class BasicMotor(BaseMotor):
 
         :param np.ndarray required_speed_kmh: (float[N]) required speed array in km/h
         :param np.ndarray gradients: (float[N]) gradient at parts of the road
-        :param np.ndarray wind_speeds: (float[N]) speeds of wind in m/s, where > 0 means against the direction of the vehicle
         :param float tick: length of 1 update cycle in seconds
         :returns: (float[N]) energy expended by the motor at every tick
         :rtype: np.ndarray
 
         """
-        net_force, required_angular_speed_rads = self.calculate_net_force(required_speed_kmh, wind_speeds, gradients)
+        net_force, required_angular_speed_rads = self.calculate_net_force(required_speed_kmh, gradients, drag_force, down_force)
 
         motor_output_energies = required_angular_speed_rads * net_force * self.tire_radius * tick
         motor_output_energies = np.clip(motor_output_energies, a_min=0, a_max=None)

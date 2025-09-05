@@ -47,11 +47,8 @@ class Aeroshell():
         180: 36.64
     }
 
-
-    def __init__(self):
-        pass
-
-    def calculate_aero_force(self, wind_speeds, wind_attack_angles, required_speed_ms, force_type):
+    @staticmethod
+    def calculate_aero_force(wind_speeds, wind_attack_angles, required_speed_ms, force_type):
         """
                 Calculate the force of drag acting in the direction opposite the movement of the car at every tick.
 

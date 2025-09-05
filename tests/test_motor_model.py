@@ -16,8 +16,7 @@ def basic_motor():
     return BasicMotor(vehicle_mass=350,
         road_friction=0.012,
         tire_radius=0.2032,
-        vehicle_frontal_area= 1.1853,
-        drag_coefficient=0.11609
+
     )
 
 
