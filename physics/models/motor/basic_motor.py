@@ -116,7 +116,7 @@ class BasicMotor(BaseMotor):
         angles = np.arctan(gradients)
         g_forces = self.vehicle_mass * self.acceleration_g * np.sin(angles)
         road_friction_array = self.road_friction * (
-                    (self.vehicle_mass * self.acceleration_g * np.cos(angles)) + down_force)
+                (self.vehicle_mass * self.acceleration_g * np.cos(angles)) + down_force)
         net_force = road_friction_array + drag_force + g_forces + acceleration_force
 
         return net_force, required_angular_speed_rads

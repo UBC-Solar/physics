@@ -40,7 +40,7 @@ aero_motor = Aeroshell(drag_lookup={0: 23.41,
     144: 29.26,
     162: 32.03,
     180: 36.64
-})
+}, wind_reference_speed=16.667)
 
 wind_attack_angles = np.array([0.0, 18.0, 36.0, 54.0, 72.0, 90.0, 108.0, 126.0, 144.0, 162.0])
 wind_speeds = np.full_like(wind_attack_angles, 16.67)

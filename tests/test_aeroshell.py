@@ -31,7 +31,7 @@ def aeroshell_motor():
         144: 29.26,
         162: 32.03,
         180: 36.64
-    })
+    }, wind_reference_speed=16.667)
 
 
 def test_calculate_drag_force(aeroshell_motor):
