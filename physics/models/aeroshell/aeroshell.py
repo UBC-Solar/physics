@@ -8,7 +8,7 @@ class Aeroshell:
 
         Drag force refers to the resistive force that affects the vehicles. This is considered by both the wind and motion of the car
         Down force refers to negative lift force i.e. acting against the normal force at every tick
-                        :param dict drag_lookup: refers to a look up table that usually consists of data from a CFD carried out by the Aeroshell team
+                        :param dict drag_lookup: refers to a look up table (corresponds angle to force) that usually consists of data from a CFD carried out by the Aeroshell team
                         :param dict down_lookup: similar look up table consisting of down force to angle references.
                         :param float: reference speed of the wind in m/s
                         :param np.ndarray wind_attack_angles: (float[N]) The attack angle of the wind for a given moment
