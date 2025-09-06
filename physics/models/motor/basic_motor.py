@@ -25,7 +25,6 @@ class BasicMotor(BaseMotor):
         self.e_mc = 0.98  # motor controller efficiency, subject to change
         self.e_m = 0.9  # motor efficiency, subject to change
 
-
     @staticmethod
     def calculate_motor_efficiency(motor_angular_speed, motor_output_energy, tick, *args, **kwargs):
         """
@@ -96,7 +95,7 @@ class BasicMotor(BaseMotor):
                             required_speed_kmh: NDArray,
                             gradients: NDArray,
                             drag_force: NDArray,
-                            down_force:NDArray
+                            down_force: NDArray
                             ) -> tuple[NDArray, NDArray]:
         """
         Calculate the net force on the car, and the required wheel angular velocity.
@@ -117,7 +116,8 @@ class BasicMotor(BaseMotor):
         required_angular_speed_rads = required_speed_ms / self.tire_radius
         angles = np.arctan(gradients)
         g_forces = self.vehicle_mass * self.acceleration_g * np.sin(angles)
-        road_friction_array = self.road_friction * ((self.vehicle_mass * self.acceleration_g * np.cos(angles))+down_force)
+        road_friction_array = self.road_friction * (
+                    (self.vehicle_mass * self.acceleration_g * np.cos(angles)) + down_force)
         net_force = road_friction_array + drag_force + g_forces + acceleration_force
 
         return net_force, required_angular_speed_rads
@@ -135,7 +135,8 @@ class BasicMotor(BaseMotor):
         :rtype: np.ndarray
 
         """
-        net_force, required_angular_speed_rads = self.calculate_net_force(required_speed_kmh, gradients, drag_force, down_force)
+        net_force, required_angular_speed_rads = self.calculate_net_force(required_speed_kmh, gradients, drag_force,
+                                                                          down_force)
 
         motor_output_energies = required_angular_speed_rads * net_force * self.tire_radius * tick
         motor_output_energies = np.clip(motor_output_energies, a_min=0, a_max=None)
@@ -180,8 +181,3 @@ def calculate_motor_controller_efficiency(motor_angular_speed, motor_torque_arra
         - (3.126e-10 * motor_angular_speed ** 2 * motor_torque_array ** 2) \
         + (1.708e-09 * motor_angular_speed * motor_torque_array ** 3) \
         - (8.094e-09 * motor_torque_array ** 4)
-
-
-
-
-

@@ -1,8 +1,9 @@
+
 import numpy as np
 from scipy.interpolate import make_interp_spline, BSpline
 
 
-class Aeroshell():
+class Aeroshell:
     """
         The Aeroshell class is used to calculate two aerodynamic forces: Drag and down force
 
@@ -20,35 +21,13 @@ class Aeroshell():
         The look up table data comes from a CFD carried out by the Aeroshell team - https://docs.google.com/spreadsheets/d/1D1ydUj-6aG-gBzlq2zTr8WgdxVIGQ9PqUZPuLfDphcg/edit?usp=sharing
 
     """
-    angle_to_unscaled_drag = {
-        0: 23.41,
-        18: 39.73,
-        36: 101.51,
-        54: 208.35,
-        72: 316.84,
-        90: 411.29,
-        108: 352.76,
-        126: 270.13,
-        144: 94.67,
-        162: 36.43,
-        180: 23.58
-    }
-    angle_to_down_force = {
-        0: 63.84,
-        18: 57.48,
-        36: 98.06,
-        54: 147.61,
-        72: 203.43,
-        90: 457.57,
-        108: 378.23,
-        126: 269.12,
-        144: 29.26,
-        162: 32.03,
-        180: 36.64
-    }
+
+    def __init__(self, drag_lookup, down_lookup):
+        self.drag_lookup = drag_lookup
+        self.down_lookup = down_lookup
 
     @staticmethod
-    def calculate_aero_force(wind_speeds, wind_attack_angles, required_speed_ms, force_type):
+    def calculate_aero_force(wind_speeds, wind_attack_angles, required_speed_ms, lookup_table):
         """
                 Calculate the force of drag acting in the direction opposite the movement of the car at every tick.
 
@@ -60,35 +39,20 @@ class Aeroshell():
                 :rtype: np.ndarray
 
         """
-        # Lookup table mapping wind angle to drag values for a wind speed of 60 km/hr. Comes from CFD simulation in the google drive.
-
-        if force_type == "drag":
-            table = Aeroshell.angle_to_unscaled_drag
-        elif force_type == "down":
-            table = Aeroshell.angle_to_down_force
-        else:
-            raise ValueError("force_type must be drag or down")
-
 
         direction = np.sign(wind_speeds)
-        angles = np.array(list(table.keys()))
-        values = np.array(list(table.values()))
+        angles = np.array(list(lookup_table.keys()))
+        values = np.array(list(lookup_table.values()))
         func = make_interp_spline(angles, values, k=3)
         force_ref = func(wind_attack_angles)
         wind_drag = direction * force_ref * (wind_speeds ** 2) / (16.667 ** 2)
-        car_drag = table[0] * (required_speed_ms ** 2) / (16.667 ** 2)
+        car_drag = lookup_table[0] * (required_speed_ms ** 2) / (16.667 ** 2)
         drag_forces = wind_drag + car_drag
-
 
         return drag_forces
 
+    def calculate_drag(self, wind_speeds, wind_attack_angles, required_speed_ms):
+        return Aeroshell.calculate_aero_force(wind_speeds, wind_attack_angles, required_speed_ms, self.drag_lookup)
 
-
-
-
-
-
-
-
-
-
+    def calculate_down(self, wind_speeds, wind_attack_angles, required_speed_ms):
+        return Aeroshell.calculate_aero_force(wind_speeds, wind_attack_angles, required_speed_ms, self.down_lookup)
