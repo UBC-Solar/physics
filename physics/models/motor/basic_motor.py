@@ -106,6 +106,7 @@ class BasicMotor(BaseMotor):
             3. Acceleration force (a = F / m)
             4. Gravitational force (force to go uphill)
             5. Down force (negative of lift)
+        note - drag and down forces are computed outside this method and passed as parameters
 
         :return: net force in N, wheel angular velocity in rad/s
         """
