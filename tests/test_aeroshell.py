@@ -1,12 +1,8 @@
 import pytest
 import numpy as np
-
 from physics.models.aeroshell.aeroshell import Aeroshell
 
-
 # create a basic regression test for the Aeroshell class
-
-
 # create a fixture to initialise the model
 
 @pytest.fixture
