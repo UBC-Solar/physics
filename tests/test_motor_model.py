@@ -1,8 +1,6 @@
 import pytest
-import physics_rs
 import numpy as np
 from physics.models import BasicMotor
-from physics.models.motor import basic_motor
 from physics.models.aeroshell.aeroshell import Aeroshell
 
 
@@ -18,6 +16,7 @@ def basic_motor():
                       )
 
 
+# calculates aerodynamic forces that are provided to the basicmotor
 aero_motor = Aeroshell(drag_lookup={0: 23.41,
                                     18: 39.73,
                                     36: 101.51,

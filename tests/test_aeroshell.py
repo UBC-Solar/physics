@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 from physics.models.aeroshell.aeroshell import Aeroshell
 
+
 # create a basic regression test for the Aeroshell class
 # create a fixture to initialise the model
 
@@ -34,7 +35,7 @@ def aeroshell_motor():
 
 
 def test_calculate_drag_force(aeroshell_motor):
-    # Define deterministic inputs for the calculate dragforce method
+    # Define deterministic inputs for the calculate drag_force method
 
     wind_attack_angles = np.array([0.0, 18.0, 36.0])
     wind_speeds = np.full_like(wind_attack_angles, 16.67)

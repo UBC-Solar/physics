@@ -2,7 +2,6 @@ import math
 import numpy as np
 from numpy.typing import NDArray
 from physics.models.motor.base_motor import BaseMotor
-from physics.models.aeroshell.aeroshell import Aeroshell
 from physics.models.constants import ACCELERATION_G, AIR_DENSITY
 
 
