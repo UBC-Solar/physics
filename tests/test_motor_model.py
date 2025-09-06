@@ -4,6 +4,7 @@ import numpy as np
 
 from physics.models import BasicMotor
 from physics.models.motor import basic_motor
+from physics.models.aeroshell.aeroshell import Aeroshell
 
 
 #create a basic regression test for the BasicMotor class
@@ -20,7 +21,13 @@ def basic_motor():
     )
 
 
-#required_speed_kmh, gradients, wind_speeds, tick, **kwargs
+
+wind_attack_angles = np.array([0.0, 18.0, 36.0, 54.0, 72.0, 90.0, 108.0, 126.0, 144.0, 162.0])
+wind_speeds = np.full_like(wind_attack_angles, 16.67)
+required_speed_ms = np.zeros_like(wind_speeds)
+
+drag_force = Aeroshell.calculate_aero_force(wind_speeds, wind_attack_angles, required_speed_ms, "drag")
+down_force = Aeroshell.calculate_aero_force(wind_speeds, wind_attack_angles, required_speed_ms, "down")
 
 
 def test_calculate_energy_in_(basic_motor):
@@ -33,10 +40,11 @@ def test_calculate_energy_in_(basic_motor):
     tick = 1.0
 
 
-    energies = basic_motor.calculate_energy_in(required_speed_kmh, gradients, winds, tick)
+    energies = basic_motor.calculate_energy_in(required_speed_kmh, gradients, drag_force, down_force, tick)
 
-    expected = np.array([0, 875.37511917, 1712.88660841 ,2532.60601288, 3347.36667064,
-     4165.06559618,4990.09286635 ,5579.38323421, 5946.16366471, 6069.18142423])
+    expected = np.array([   0.,         948.99456941, 2115.57457112, 3810.27889217, 5892.03839313,
+    7759.88635444 ,7194.56938554, 7170.5217449 , 6357.62768734 ,6112.87374071])
+
 
     assert np.allclose(energies, expected, atol=1e-3)
 

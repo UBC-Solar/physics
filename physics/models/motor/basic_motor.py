@@ -180,3 +180,8 @@ def calculate_motor_controller_efficiency(motor_angular_speed, motor_torque_arra
         - (3.126e-10 * motor_angular_speed ** 2 * motor_torque_array ** 2) \
         + (1.708e-09 * motor_angular_speed * motor_torque_array ** 3) \
         - (8.094e-09 * motor_torque_array ** 4)
+
+
+
+
+
