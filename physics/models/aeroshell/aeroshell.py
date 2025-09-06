@@ -15,8 +15,6 @@ class Aeroshell:
                         :param np.ndarray required_speed_ms: (float[N]) required speed array in m/s
                         :returns: (float[N]) the drag or down force in Newtons at every tick of the race
                         :rtype: np.ndarray
-
-                ""
     """
 
     def __init__(self, drag_lookup: dict[float, float], down_lookup: dict[float, float]):
