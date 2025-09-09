@@ -129,6 +129,8 @@ class BasicMotor(BaseMotor):
 
         :param np.ndarray required_speed_kmh: (float[N]) required speed array in km/h
         :param np.ndarray gradients: (float[N]) gradient at parts of the road
+        :param np.ndarray drag_force: (float[N]) drag force (wind + forward velocity)
+        :param np.ndarray down_force: (float[N]) down force (negative of lift)
         :param float tick: length of 1 update cycle in seconds
         :returns: (float[N]) energy expended by the motor at every tick
         :rtype: np.ndarray
