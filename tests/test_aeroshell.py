@@ -1,59 +1,41 @@
 import pytest
 import numpy as np
 from physics.models.aeroshell.aeroshell import Aeroshell
-
+from physics.models.constants import AIR_DENSITY
 
 # create a basic regression test for the Aeroshell class
 # create a fixture to initialise the model
-
 @pytest.fixture
 def aeroshell_motor():
-    return Aeroshell(drag_lookup={0: 23.41,
-                                  18: 39.73,
-                                  36: 101.51,
-                                  54: 208.35,
-                                  72: 316.84,
-                                  90: 411.29,
-                                  108: 352.76,
-                                  126: 270.13,
-                                  144: 94.67,
-                                  162: 36.43,
-                                  180: 23.58
-                                  }, down_lookup={
-        0: 63.84,
-        18: 57.48,
-        36: 98.06,
-        54: 147.61,
-        72: 203.43,
-        90: 457.57,
-        108: 378.23,
-        126: 269.12,
-        144: 29.26,
-        162: 32.03,
-        180: 36.64
-    }, wind_reference_speed=16.667)
+    return Aeroshell(drag_lookup={0: 0.137601477, 18: 0.2335363083, 36: 0.5965968882, 54: 1.224448936, 72: 1.861868971,
+                                  90: 2.38148208, 108: 2.073196244, 126: 1.587471653, 144: 0.5564901716,
+                                  162: 0.2141437734, 180: 0.1386601712},
 
+                     down_lookup={
+
+            0: 0.37526598, 18: 0.3378390168, 36: 0.576439927, 54: 0.8675973423, 72: 1.19551954, 90: 2.683269654,
+            108: 2.223002744, 126: 1.581662338, 144: 0.17190782, 162: 0.1882638387, 180: 0.2153506426
+
+    }, wind_reference_speed = 16.667, density = AIR_DENSITY)
 
 def test_calculate_drag_force(aeroshell_motor):
-    # Define deterministic inputs for the calculate drag_force method
+        # Define deterministic inputs for the calculate drag_force method
 
-    wind_attack_angles = np.array([0.0, 18.0, 36.0])
-    wind_speeds = np.full_like(wind_attack_angles, 16.67)
-    required_speed_ms = np.zeros_like(wind_speeds)
-
-    drag_force = aeroshell_motor.calculate_drag(wind_speeds, wind_attack_angles, required_speed_ms)
-
-    expected = np.array([23.41842819, 39.7443038, 101.54654616])
-    assert np.allclose(drag_force, expected, atol=1e-3)
-
+        wind_attack_angles = np.array([0.0, 18.0, 36.0])
+        wind_speeds = np.zeros_like(wind_attack_angles)
+        required_speed_ms = np.full_like(wind_attack_angles, 16.67)
+        drag_force = aeroshell_motor.calculate_drag(wind_speeds, wind_attack_angles, required_speed_ms)
+        expected = np.array([23.42072789, 37.80402389, 82.1515801])
+        assert np.allclose(drag_force, expected, atol=1e-3)
 
 def test_calculate_down_force(aeroshell_motor):
-    # Define deterministic inputs for the calculate downforce method
+        # Define deterministic inputs for the calculate downforce method
 
-    wind_attack_angles = np.array([0.0, 18.0, 36.0])
-    wind_speeds = np.full_like(wind_attack_angles, 16.67)
-    required_speed_ms = np.zeros_like(wind_speeds)
+        wind_attack_angles = np.array([0.0, 18.0, 36.0])
+        wind_speeds = np.full_like(wind_attack_angles, 16.67)
+        required_speed_ms = np.zeros_like(wind_speeds)
 
-    down_force = aeroshell_motor.calculate_down(wind_speeds, wind_attack_angles, required_speed_ms)
-    expected = np.array([63.84, 57.48, 98.06])
-    assert np.allclose(down_force, expected, atol=1e-1)
+        down_force = aeroshell_motor.calculate_down(wind_speeds, wind_attack_angles, required_speed_ms)
+        print(down_force)
+        expected = np.array([63.84, 57.48, 98.06])
+        assert np.allclose(down_force, expected, atol=1e-1)
