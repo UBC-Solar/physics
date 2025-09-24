@@ -6,17 +6,17 @@ from physics.models.constants import AIR_DENSITY
 
 class Aeroshell:
 
-    def __init__(self, drag_lookup: dict[float, float], down_lookup: dict[float, float], wind_reference_speed, density):
-        self.drag_lookup = drag_lookup  # look up table (corresponds angle to CdA) that usually consists of data from a CFD carried out by the Aeroshell team
-        self.down_lookup = down_lookup  # similar look up table consisting of ClA(coefficients) to angle references.
-        self.wind_reference_speed = wind_reference_speed  # reference speed of the wind in m/s
+    def __init__(self, drag_lookup: dict[float, float], down_lookup: dict[float, float]):
+        """
+            :param dict[float, float] drag_lookup:  look up table (corresponds angle to CdA) that usually consists of data from a CFD carried out by the Aeroshell team
+            :param dict[float, float] down_lookup:  similar look up table that maps angles to ClA
+
+        """
+
         self.density = AIR_DENSITY
-
         drag_angles = np.array(list(drag_lookup.keys()))  # keys in the values of angles from the look_up table
-        self.drag_coefficients = np.array(list(
-            drag_lookup.values()))  # keys in the values of corresponding coefficients computed by the CFD from the look_up table
-        self.angle_to_drag_coefficient = make_interp_spline(drag_angles, self.drag_coefficients,k=3)  # interpolation function to estimate values
-
+        drag_coefficients = np.array(list(drag_lookup.values()))  # keys in the values of corresponding coefficients computed by the CFD from the look_up table
+        self.angle_to_drag_coefficient = make_interp_spline(drag_angles, drag_coefficients, k=3)  # interpolation function to estimate values
         # similar procedure for down force
         down_angles = np.array(list(down_lookup.keys()))
         down_values = np.array(list(down_lookup.values()))

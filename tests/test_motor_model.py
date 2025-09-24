@@ -28,7 +28,7 @@ aero_motor = Aeroshell(
         0: 0.37526598, 18: 0.3378390168, 36: 0.576439927, 54: 0.8675973423, 72: 1.19551954, 90: 2.683269654,
         108: 2.223002744, 126: 1.581662338, 144: 0.17190782, 162: 0.1882638387, 180: 0.2153506426
 
-    }, wind_reference_speed=16.667, density=AIR_DENSITY)
+    }, density=AIR_DENSITY)
 
 wind_attack_angles = np.array([0.0, 18.0, 36.0, 54.0, 72.0, 90.0, 108.0, 126.0, 144.0, 162.0])
 wind_speeds = np.full_like(wind_attack_angles, 16.67)
