@@ -18,7 +18,7 @@ def aeroshell_motor():
                          90: 2.683269654,
                          108: 2.223002744, 126: 1.581662338, 144: 0.17190782, 162: 0.1882638387, 180: 0.2153506426
 
-                     }, density=AIR_DENSITY)
+                     })
 
 def test_calculate_drag_force(aeroshell_motor):
     # Define deterministic inputs for the calculate drag_force method
