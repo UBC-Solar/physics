@@ -8,9 +8,8 @@ class Aeroshell:
 
     def __init__(self, drag_lookup: dict[float, float], down_lookup: dict[float, float]):
         """
-            :param dict[float, float] drag_lookup:  look up table (corresponds angle to CdA) that usually consists of data from a CFD carried out by the Aeroshell team
-            :param dict[float, float] down_lookup:  similar look up table that maps angles to ClA
-
+        :param dict[float, float] drag_lookup:  look up table (corresponds angle in degrees to CdA) that usually consists of data from a CFD carried out by the Aeroshell team
+        :param dict[float, float] down_lookup:  similar look up table that maps angles to ClA
         """
 
         self.density = AIR_DENSITY
@@ -48,12 +47,13 @@ class Aeroshell:
 
     def calculate_drag(self, wind_speeds: NDArray, wind_attack_angles: NDArray, required_speed_ms: NDArray):
         """
-                      Specifically calculates the force of drag acting in the direction opposite the movement of the car at every tick.
-                      :param np.ndarray wind_speeds: (float[N]) speeds of wind in m/s, where < 0 means against the direction of the vehicle
-                      :param np.ndarray wind_attack_angles: (float[N]) The attack angle of the wind for a given moment
-                      :param np.ndarray required_speed_ms: (float[N]) required speed array in m/s
-                      :returns: (float[N]) the drag force in Newtons at every tick of the race
-                      :rtype: np.ndarray
+        Calculates the force of drag acting in the direction opposite the movement of the car at every tick.
+
+        :param np.ndarray wind_speeds: (float[N]) speeds of wind in m/s, where < 0 means against the direction of the vehicle
+        :param np.ndarray wind_attack_angles: (float[N]) The attack angle of the wind in degrees for a given moment
+        :param np.ndarray required_speed_ms: (float[N]) required speed array in m/s
+        :returns: (float[N]) the drag force in Newtons at every tick of the race
+        :rtype: np.ndarray
         """
 
         drag_force, _ = self.calculate_aero_force(self.density, self.angle_to_drag_coefficient, wind_speeds,
@@ -62,12 +62,13 @@ class Aeroshell:
 
     def calculate_down(self, wind_speeds: NDArray, wind_attack_angles: NDArray, required_speed_ms: NDArray):
         """
-                      Specifically calculates the down force - negative lift force acting on the vehicle
-                      :param np.ndarray wind_speeds: (float[N]) speeds of wind in m/s, where < 0 means against the direction of the vehicle
-                      :param np.ndarray wind_attack_angles: (float[N]) The attack angle of the wind for a given moment
-                      :param np.ndarray required_speed_ms: (float[N]) required speed array in m/s
-                      :returns: (float[N]) the down force in Newtons at every tick of the race
-                      :rtype: np.ndarray
+        Calculates the down force/negative lift force acting on the vehicle.
+
+        :param np.ndarray wind_speeds: (float[N]) speeds of wind in m/s, where < 0 means against the direction of the vehicle
+        :param np.ndarray wind_attack_angles: (float[N]) The attack angle in degrees of the wind for a given moment
+        :param np.ndarray required_speed_ms: (float[N]) required speed array in m/s
+        :returns: (float[N]) the down force in Newtons at every tick of the race
+        :rtype: np.ndarray
         """
 
         _, down_forces = self.calculate_aero_force(self.density, self.angle_to_down_coefficient, wind_speeds,
