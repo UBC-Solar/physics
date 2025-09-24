@@ -22,7 +22,8 @@ class Aeroshell:
         down_values = np.array(list(down_lookup.values()))
         self.angle_to_down_coefficient = make_interp_spline(down_angles, down_values, k=3)
 
-    def calculate_aero_force(self, density, interpolation_function, wind_speeds: NDArray, wind_attack_angles: NDArray,
+    @staticmethod
+    def calculate_aero_force(density, interpolation_function, wind_speeds: NDArray, wind_attack_angles: NDArray,
                              required_speed_ms: NDArray):
         """
                 Calculates aerodynamic forces - drag and down.
