@@ -28,7 +28,7 @@ fn battery_evolve(
     nominal_charge_capacity: f64,  // Nominal charge capacity (Coulombs)
 ) -> (f64, f64, f64) {
     // Update state of charge and polarization potential
-    let new_state_of_charge: f64 = state_of_charge + (current * tick / nominal_charge_capacity);
+    let new_state_of_charge: f64 = f64::min(1.0, state_of_charge + (current * tick / nominal_charge_capacity));
     let new_polarization_potential: f64 = f64::exp(-tick / time_constant) * polarization_potential
         + current * polarization_resistance * (1.0 - f64::exp(-tick / time_constant));
     let terminal_voltage: f64 = open_circuit_voltage + new_polarization_potential
