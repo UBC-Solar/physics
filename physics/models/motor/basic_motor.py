@@ -119,7 +119,7 @@ class BasicMotor(BaseMotor):
                 (self.vehicle_mass * self.acceleration_g * np.cos(angles)) + down_force)
         net_force = road_friction_array + drag_force + g_forces + acceleration_force
 
-        return net_force, required_angular_speed_rads, road_friction_array, drag_forces, g_forces
+        return net_force, required_angular_speed_rads
 
     def calculate_energy_in(self, required_speed_kmh, gradients, drag_force, down_force, tick, **kwargs):
         """
