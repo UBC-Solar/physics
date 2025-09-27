@@ -97,6 +97,9 @@ Documentation = "https://ubc-solar-physics.readthedocs.io/en/latest/"
 [tool.setuptools]
 packages = ["physics", "physics_rs"]
 
+[tool.setuptools_scm]
+tag_regex = "^v(?P<version>.*)$"
+
 [[tool.setuptools-rust.ext-modules]]
 target = "physics_rs"    # Private Rust extension module to be nested into the Python package
 path = "Cargo.toml"      # Default value, can be omitted

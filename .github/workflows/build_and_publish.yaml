@@ -22,7 +22,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required to fetch full history including tags, so setuptools_scm can determine version
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Ensure Tags Present
+        run: |
+          git fetch --force --tags
+          git describe --tags --always
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -54,9 +60,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Required to fetch full history including tags, so setuptools_scm can determine version
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Ensure Tags Present
+        run: |
+          git fetch --force --tags
+          git describe --tags --always
 
       - name: Enable QEMU emulation
         if: runner.os == 'Linux'
