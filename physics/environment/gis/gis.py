@@ -17,7 +17,9 @@ class GIS(BaseGIS):
 
         Initialises a GIS (geographic location system) object. This object is responsible for getting the
         simulation's planned route from the Google Maps API and performing operations on the received data.
+ ]
 
+coords = reverse_coords[::-1] # coordinates in the correct order; starting coordinate goes first
         Requires a map, ``route_data`` with certain keys.
             1. "path": an iterable of shape [N, 2] representing N coordinates in the form (latitude, longitude).
             2. "elevations": an iterable of shape [N] where each Nth element is the elevation, in meters, of the Nth path coordinate.
