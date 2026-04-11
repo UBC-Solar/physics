@@ -1,6 +1,5 @@
 # necessary imports:
-import os
-import gc
+
 import argparse
 import numpy as np
 import pandas as pd
