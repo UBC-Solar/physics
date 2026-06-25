@@ -4,6 +4,7 @@ from .lvs import BasicLVS
 from .motor import BasicMotor
 from .regen import BasicRegen
 from .aeroshell import Aeroshell
+from .steering import SteeringModel
 
 __all__ = [
     "BasicArray",
@@ -11,5 +12,6 @@ __all__ = [
     "BasicLVS",
     "BasicMotor",
     "BasicRegen",
-    "Aeroshell"
+    "Aeroshell",
+    "SteeringModel"
 ]
