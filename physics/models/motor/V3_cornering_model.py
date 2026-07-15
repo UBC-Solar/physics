@@ -1,4 +1,5 @@
 from physics.models.motor import BasicMotor
+import numpy as np
 from physics.models.steering import SteeringModel
 
 class V3CorneringModel(BasicMotor):
@@ -12,7 +13,6 @@ class V3CorneringModel(BasicMotor):
         self.left_side = left
         self.front_side = front
         self.COG_height = 0.5 #meters, arbitrary value for now
-
 
     def get_slip (self, IMU_lateral_acceleration, ):
         """
@@ -44,3 +44,15 @@ class V3CorneringModel(BasicMotor):
         if (self.left_side == True):
 
         else:
+
+    def calculate_power_loss(self, IMU_lateral_acceleration, x1, y1, x2, y2, x3, y3, forward_velocity):
+        """
+        Function to calculate power loss of 1 tire patch
+
+        Last Param: Forward component of vehicle velocity relative to direction of the car.
+        Other Parameters here are really only used to call necessary functions, and are defined for said called functions. See specific function descriptions for more details.
+        """
+
+        power = np.tan( get_slip(IMU_lateral_acceleration) ) * forward_velocity *
+
+        return power
