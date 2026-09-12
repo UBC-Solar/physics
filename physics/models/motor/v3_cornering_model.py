@@ -51,8 +51,7 @@ class V3CorneringModel(BasicMotor):
         total_LLT = self.vehicle_mass * self.COG_height / self.trackwidth
 
         if (self.left_side == True):
-
-        else:
+            pass
 
     def calculate_power_loss(self, IMU_lateral_acceleration, x1, y1, x2, y2, x3, y3, forward_velocity):
         """
