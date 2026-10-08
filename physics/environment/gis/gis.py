@@ -102,7 +102,7 @@ class GIS(BaseGIS):
                     actual_speed = 0
 
                 actual_speeds_kmh.append(actual_speed)
-                distance_travelled += actual_speed * dt
+                distance_travelled += actual_speed / 3.6 * dt
 
                 while distance_travelled > self.path_distances[track_index]:
                     distance_travelled -= self.path_distances[track_index]

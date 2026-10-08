@@ -47,7 +47,7 @@ pub fn calculate_speeds_and_position(
         };
 
         actual_speeds_kmh.push(actual_speed);
-        distance_travelled += actual_speed * simulation_dt as f64;
+        distance_travelled += actual_speed / 3.6 * simulation_dt as f64;
 
         while distance_travelled > path_distances[track_index] {
             distance_travelled -= path_distances[track_index];
