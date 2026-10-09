@@ -71,41 +71,41 @@ class GIS(BaseGIS):
         """
         return physics_rs.closest_gis_indices_loop(distances, self.path_distances)
 
-    def calculate_speeds_and_position(self, speeds_kmh: NDArray, track_speeds: NDArray, dt: int):
+    def calculate_speeds_and_position(self, speeds_kmh: NDArray, track_speeds: NDArray, dt_s: int):
         try:
-            return physics_rs.calculate_speeds_and_position(speeds_kmh, self.path_distances, track_speeds, dt)
+            return physics_rs.calculate_speeds_and_position(speeds_kmh, self.path_distances, track_speeds, dt_s)
 
         except Exception:
-            return self._py_calculate_speeds_and_position(speeds_kmh, track_speeds, dt)
+            return self._py_calculate_speeds_and_position(speeds_kmh, track_speeds, dt_s)
 
-    def _py_calculate_speeds_and_position(self, speeds_kmh: NDArray, track_speeds: NDArray, dt: int):
+    def _py_calculate_speeds_and_position(self, speeds_kmh: NDArray, track_speeds: NDArray, dt_s: int):
         """
         Given the original, lap-averaged `speeds_kmh` and an array of speed deviations in km/h for each track index,
         compute the position and actual speed as simulation-time arrays.
 
         :param speeds_kmh: Lap-averaged speeds in km/h.
         :param track_speeds: A speed deviation in km/h for each track index. Expects the mean to be at 0.
-        :param dt:
+        :param dt_s:
         :return:
         """
         result = []
         actual_speeds_kmh = []
 
         with tqdm(total=len(speeds_kmh), file=sys.stdout, desc="Calculating closest GIS indices") as pbar:
-            distance_travelled = 0
+            distance_traveled_m = 0
             track_index = 0
 
             for lap_speed in speeds_kmh:
                 if lap_speed > 0:
-                    actual_speed = lap_speed + track_speeds[track_index]
+                    actual_speed_kmh = lap_speed + track_speeds[track_index]
                 else:
-                    actual_speed = 0
+                    actual_speed_kmh = 0
 
-                actual_speeds_kmh.append(actual_speed)
-                distance_travelled += actual_speed / 3.6 * dt
+                actual_speeds_kmh.append(actual_speed_kmh)
+                distance_traveled_m += actual_speed_kmh / 3.6 * dt_s
 
-                while distance_travelled > self.path_distances[track_index]:
-                    distance_travelled -= self.path_distances[track_index]
+                while distance_traveled_m > self.path_distances[track_index]:
+                    distance_traveled_m -= self.path_distances[track_index]
                     track_index += 1
 
                     if track_index >= len(self.path_distances):
