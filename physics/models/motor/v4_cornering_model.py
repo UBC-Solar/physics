@@ -3,10 +3,6 @@ from physics.models.steering import SteeringModel
 import numpy as np
 
 class V4CorneringModel(AdvancedMotor):
-    car_mass = 160 # In kg, arbitrary value for now
-
-
-
     GRAVITY = 9.81  # N / kg
     def __init__(self, **kwargs):
         self.car_mass = 160 # kg
@@ -38,7 +34,7 @@ class V4CorneringModel(AdvancedMotor):
         :return: list of dynamic tire loads
         """
         corner_force_in_Gs = imu_lateral_acceleration / self.GRAVITY
-        apparent_mass = self.car_mass + self.car_mass(1 + imu_vertical_acceleration/GRAVITY)
+        apparent_mass = -self.car_mass * imu_vertical_acceleration/self.GRAVITY
         LLT = corner_force_in_Gs * apparent_mass * self.COG_height * self.track_width
         front_weight_transferred = (self.tires["FR"]["static_load"] + self.tires["FL"]["static_load"]) / self.car_mass * LLT
         back_weight_transferred = (self.tires["BR"]["static_load"] + self.tires["BL"]["static_load"]) / self.car_mass * LLT
@@ -52,7 +48,6 @@ class V4CorneringModel(AdvancedMotor):
 
     def SlipAngles (self, yolk_angle, yaw_rate, velocity):
         """
-
         :param yolk_angle: from sensor, clockwise is positive
         :param yaw_rate: from IMU, clockwise is positive
         :param velocity: given from GPS+odometry+IMU estimations
@@ -60,11 +55,10 @@ class V4CorneringModel(AdvancedMotor):
         """
         FL_angle, FR_angle = SteeringModel.calculate_steer_angles(yoke_angle)
 
-        FL_dif = - np.arctan( (yaw_rate*self.front_distance) / (velocity-self.track_width*yaw_rate))
-        FR_dif = -np.arctan( (yaw_rate*self.front_distance) / (velocity+self.track_width*yaw_rate))
-        BL_dif = -np.arctan( ())
-        BR_dif
-
+        FL_dif = -np.arctan( (yaw_rate*self.front_distance) / (velocity-self.track_width/2*yaw_rate) )
+        FR_dif = -np.arctan( (yaw_rate*self.front_distance) / (velocity+self.track_width/2*yaw_rate) )
+        BL_dif = -np.arctan( (-yaw_rate*self.back_distance) / (velocity-self.track_width/2*yaw_rate) )
+        BR_dif = -np.arctan( (-yaw_rate*self.back_distance) / (velocity+self.track_width/2*yaw_rate) )
 
         FL_slip = FL_angle + FL_dif
         FR_slip = FR_angle + FR_dif
@@ -73,9 +67,9 @@ class V4CorneringModel(AdvancedMotor):
 
         return
 
-    def getPowerLoss (self, velocity, imu_lateral_acceleration, imu_vertical_acceleration):
+    def getPowerLoss (self, velocity, yolk_angle, yaw_rate, imu_lateral_acceleration, imu_vertical_acceleration):
         FL_load, FR_load, BR_load, BL_load = self.tireLoads(imu_lateral_acceleration, imu_vertical_acceleration)
-        FL_slip, FR_slip, BR_slip, BL_slip = self.slipAngles()
+        FL_slip, FR_slip, BR_slip, BL_slip = self.slipAngles(yolk_angle, yaw_rate, velocity)
 
         power_FL = FL_load * imu_lateral_acceleration * velocity * np.tan(FL_slip)
         power_FR = FR_load * imu_lateral_acceleration * velocity * np.tan(FR_slip)
