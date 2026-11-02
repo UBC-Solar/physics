@@ -30,27 +30,27 @@ pub fn calculate_speeds_and_position(
     speeds_kmh: ArrayView1<'_, f64>,
     path_distances: ArrayView1<'_, f64>,
     track_speeds: ArrayView1<'_, f64>,
-    simulation_dt: u32,
+    simulation_dt_s: u32,
 ) -> (Vec<usize>, Vec<f64>) {
     let mut track_index: usize = 0;
-    let mut distance_travelled: f64 = 0.0;
+    let mut distance_traveled_m: f64 = 0.0;
     let n = path_distances.len();
 
     let mut result: Vec<usize> = Vec::with_capacity(speeds_kmh.len());
     let mut actual_speeds_kmh: Vec<f64> = Vec::with_capacity(speeds_kmh.len());
 
     for &speed in speeds_kmh {
-        let actual_speed = if speed > 0.0 {
+        let actual_speed_kmh = if speed > 0.0 {
             speed + track_speeds[track_index]
         } else {
             0.0
         };
 
-        actual_speeds_kmh.push(actual_speed);
-        distance_travelled += actual_speed * simulation_dt as f64;
+        actual_speeds_kmh.push(actual_speed_kmh);
+        distance_traveled_m += actual_speed_kmh / 3.6 * simulation_dt_s as f64;
 
-        while distance_travelled > path_distances[track_index] {
-            distance_travelled -= path_distances[track_index];
+        while distance_traveled_m > path_distances[track_index] {
+            distance_traveled_m -= path_distances[track_index];
             track_index += 1;
 
             if track_index >= n {
