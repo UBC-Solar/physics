@@ -183,8 +183,8 @@ class AdvancedMotor(BasicMotor):
         :param float y2: Y-coordinate of the second point
         :param float x3: X-coordinate of the third point
         :param float y3: Y-coordinate of the third point
-        :returns: Radius of curvature of the circle passing through the three points
-        :rtype: float
+        :returns: Radius of curvature of the circle passing through the three points and turning direction
+        :rtype: float, boolean
         """
         numerator = np.sqrt(
             ((x3 - x2) ** 2 + (y3 - y2) ** 2) *
@@ -192,8 +192,14 @@ class AdvancedMotor(BasicMotor):
             ((x2 - x1) ** 2 + (y2 - y1) ** 2)
         )
 
-        denominator = 2 * abs(
+        denominator = 2 * (
             ((x2 - x1) * (y1 - y3) - (x1 - x3) * (y2 - y1))
         )
 
-        return numerator / denominator
+        if denominator < 0:
+            is_left = True
+            denominator = -denominator
+        else:
+            is_left = False
+
+        return numerator / denominator, is_left
