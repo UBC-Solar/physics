@@ -11,7 +11,7 @@ The API is currently unstable, and backwards compatibility may not be maintained
 Versions indicated are recommended
 
 * Git [^1]
-* Python >=3.9 [^2]
+* Python >=3.10 [^2]
 * Rustc >=1.79.0 [^3]
 * Cargo >=1.79.0 [^4]
 

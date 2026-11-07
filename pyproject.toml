@@ -36,10 +36,10 @@ maintainers = [
     {name = "Jonah Lee"},
     {name = "Tamzeed Quazi"},
 ]
-description = "UBC Solar's Simulation Environment"
+description = "UBC Solar's Physics Simulations"
 readme = "README.md"
-requires-python = ">=3.9"
-keywords = ["car", "simulation", "solar"]
+requires-python = ">=3.10"
+keywords = ["car", "physics", "solar"]
 license = { file = "LICENSE"}
 dynamic = ["version"]
 classifiers = [
