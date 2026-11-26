@@ -14,8 +14,8 @@ Versions indicated are recommended
 
 * Git [^1]
 * Python >=3.10 [^2]
-* Rustc >=1.79.0 [^3]
-* Cargo >=1.79.0 [^4]
+* Rustc >=1.85.0 [^3]
+* Cargo >=1.85.0 [^4]
 
 ## Installation
 
@@ -51,6 +51,15 @@ solar_power_produced = arrays.calculate_produced_energy(solar_irradiance=irradia
 
 assert np.array_equal(solar_power_produced, np.array([400.0, 400.0, 400.0, 400.0, 400.0]))
 ```
+
+## Rust Crates
+
+The compiled parts of this package live in a Cargo workspace under `crates/`:
+
+* `crates/physics` (package `ubc-solar-physics`, library `physics`): the models in pure Rust, with no Python dependency. Rust projects can depend on it directly, for example with `physics = { package = "ubc-solar-physics", git = "https://github.com/UBC-Solar/physics", tag = "..." }`.
+* `crates/physics-py`: the PyO3 bindings, built into the `physics_rs._physics_rs` extension module, which the `physics_rs` package re-exports for the Python package to use. It only converts between NumPy arrays and Rust types; logic belongs in `crates/physics`.
+
+`pip install` builds the bindings automatically. To work on the Rust code directly, run `cargo test --workspace` and `cargo clippy --workspace` from the repository root. When changing a binding's signature, update `physics_rs/__init__.pyi` to match.
 
 ## Appendix
 
