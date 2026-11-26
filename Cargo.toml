@@ -1,14 +1,14 @@
-[package]
-name = "physics_rs"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["crates/physics", "crates/physics-py"]
+resolver = "3"
 
-[lib]
-name = "physics_rs"
-path = "physics/lib.rs"
-crate-type = ["cdylib"]
+[workspace.package]
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+repository = "https://github.com/UBC-Solar/physics"
 
-[dependencies]
-chrono = "=0.4.34"
-numpy = "=0.20.0"
-pyo3 = { version = "=0.20.0", features = ["extension-module"] }
+[workspace.dependencies]
+# `numpy` (in physics-py) re-exports ndarray and must resolve to the same version as the one used
+# here, so that array views pass between the two crates without copying.
+ndarray = "0.17"

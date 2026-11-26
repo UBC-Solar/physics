@@ -1,0 +1,17 @@
+[package]
+# `physics` is taken on crates.io, so the package matches the PyPI name; the library is still `physics`.
+name = "ubc-solar-physics"
+version = "0.1.0"
+description = "UBC Solar's physics models for simulating a solar-powered vehicle"
+readme = "../../README.md"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+name = "physics"
+
+[dependencies]
+chrono = { version = "0.4.42", default-features = false, features = ["std"] }
+ndarray.workspace = true

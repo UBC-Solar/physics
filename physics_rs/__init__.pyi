@@ -70,6 +70,8 @@ def weather_in_time(
     :param index: A specific index to look up in the weather forecast.
 
     :return: A NumPy array of weather values (f64) at the specified times and indices.
+    :raises ValueError: If the forecast is empty, the timestamps and indices differ in length, an index
+        is out of range, or `index` is not a field of the forecast.
     """
     ...
 
@@ -107,5 +109,50 @@ def update_battery_state(
     :return: A tuple containing:
         - An array of updated SOC values (f64).
         - An array of updated terminal voltage values (f64).
+    """
+    ...
+
+
+def calculate_speeds_and_position(
+        speeds_kmh_py: np.ndarray,
+        path_distances_py: np.ndarray,
+        track_speeds_py: np.ndarray,
+        simulation_dt: int
+) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Computes the track index and actual speed at each tick from lap-averaged speeds and a speed
+    deviation at each track index.
+
+    :param speeds_kmh_py: Array of lap-averaged speeds (km/h) at each tick. Non-positive means stopped.
+    :param path_distances_py: Array of the length (m) of each segment of the looping path.
+    :param track_speeds_py: Array of the speed deviation (km/h) to apply at each track index.
+    :param simulation_dt: The length of a tick (s).
+
+    :return: A tuple containing:
+        - An array of track indices (uintp) at each tick.
+        - An array of actual speeds (km/h, f64) at each tick.
+    """
+    ...
+
+
+def get_driving_speeds(
+        py_average_speeds: np.ndarray,
+        simulation_dt: int,
+        py_driving_allowed_boolean: np.ndarray,
+        track_length: float,
+        idle_time: int
+) -> np.ndarray:
+    """
+    Generates a simulation-time array of driving speeds from one average speed per lap. A speed of 0
+    means "sit and charge" for `idle_time` seconds.
+
+    :param py_average_speeds: Array of average speeds (m/s), one for each lap.
+    :param simulation_dt: The length of a tick (s).
+    :param py_driving_allowed_boolean: Simulation-time boolean array; `True` when driving is allowed.
+    :param track_length: The length of the track (m).
+    :param idle_time: The time to sit and charge (s) for a lap with a speed of 0.
+
+    :return: A NumPy array of driving speeds (m/s, f64) at each tick.
+    :raises ValueError: If there are not enough average speeds to fill the simulation time.
     """
     ...

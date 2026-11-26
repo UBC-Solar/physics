@@ -1,8 +1,19 @@
-use numpy::ndarray::{ArrayViewD, ArrayView1};
+use ndarray::ArrayView1;
 
-pub fn rust_closest_gis_indices_loop(
-    distances: ArrayViewD<'_, f64>,
-    path_distances: ArrayViewD<'_, f64>,
+const KMH_TO_MS: f64 = 1.0 / 3.6;
+
+/// Map distances travelled each tick to indices along a looping path.
+///
+/// # Arguments
+///
+/// * `distances`: The distance (m) travelled during each tick.
+/// * `path_distances`: The length (m) of each segment of the path. The path loops back to index 0
+///   after its last segment.
+///
+/// Returns: The path index the vehicle is at after each tick.
+pub fn closest_gis_indices(
+    distances: ArrayView1<'_, f64>,
+    path_distances: ArrayView1<'_, f64>,
 ) -> Vec<i64> {
     let mut current_coord_index: usize = 0;
     let mut distance_travelled: f64 = 0.0;
@@ -26,6 +37,18 @@ pub fn rust_closest_gis_indices_loop(
     result
 }
 
+/// Given lap-averaged speeds and a speed deviation for each track index, compute the vehicle's
+/// position and actual speed at each tick.
+///
+/// # Arguments
+///
+/// * `speeds_kmh`: The lap-averaged speed (km/h) at each tick. Non-positive speeds mean the
+///   vehicle is stopped.
+/// * `path_distances`: The length (m) of each segment of the looping path.
+/// * `track_speeds`: The speed deviation (km/h) to apply at each track index.
+/// * `simulation_dt_s`: The length of a tick (s).
+///
+/// Returns: The track index and the actual speed (km/h) at each tick.
 pub fn calculate_speeds_and_position(
     speeds_kmh: ArrayView1<'_, f64>,
     path_distances: ArrayView1<'_, f64>,
@@ -76,11 +99,11 @@ pub fn calculate_speeds_and_position(
 /// # Arguments
 ///
 /// * `average_speeds`: An array of average speeds in m/s, one for each simulated lap. If there are more
-/// speeds given than laps available, the unused speeds will be silently ignored. If there are too
-/// few, an error will be returned.
+///   speeds given than laps available, the unused speeds will be silently ignored. If there are too
+///   few, an error will be returned.
 /// * `simulation_dt`: The simulated tick length
 /// * `driving_allowed_boolean`: A simulation-time boolean where the `True` elements are when we
-/// are allowed to drive, and `False` is when we are not.
+///   are allowed to drive, and `False` is when we are not.
 /// * `track_length`: The length of the track in meters.
 /// * `idle_time`: The number of ticks to "sit and charge" when desired.
 ///
@@ -88,20 +111,23 @@ pub fn calculate_speeds_and_position(
 /// laps provided to fill the entire simulation time.
 ///
 pub fn get_driving_speeds(
-    average_speeds: ArrayView1<'_, f64>,            // Average speeds in m/s
-    simulation_dt: i64,                             // Time step in seconds
-    driving_allowed_boolean: ArrayView1<'_, bool>,  // Simulation-time boolean array
-    track_length: f64,                              // Track length in meters
-    idle_time: i64                                  // Time to idle in seconds
+    average_speeds: ArrayView1<'_, f64>, // Average speeds in m/s
+    simulation_dt: i64,                  // Time step in seconds
+    driving_allowed_boolean: ArrayView1<'_, bool>, // Simulation-time boolean array
+    track_length: f64,                   // Track length in meters
+    idle_time: i64,                      // Time to idle in seconds
 ) -> Result<Vec<f64>, &'static str> {
-    let ticks_to_complete_lap: Vec<i64> = average_speeds.iter().map(| &average_speed | {
-        if average_speed > 0.0 {
-            // The number of ticks is the number of seconds, divided by seconds per tick
-            (track_length / average_speed / simulation_dt as f64).ceil() as i64
-        } else {
-            (idle_time as f64 / simulation_dt as f64).ceil() as i64
-        }
-    }).collect();
+    let ticks_to_complete_lap: Vec<i64> = average_speeds
+        .iter()
+        .map(|&average_speed| {
+            if average_speed > 0.0 {
+                // The number of ticks is the number of seconds, divided by seconds per tick
+                (track_length / average_speed / simulation_dt as f64).ceil() as i64
+            } else {
+                (idle_time as f64 / simulation_dt as f64).ceil() as i64
+            }
+        })
+        .collect();
 
     let mut lap_index: usize = 0;
     let mut lap_speed: f64 = average_speeds[lap_index];
@@ -133,7 +159,7 @@ pub fn get_driving_speeds(
                 // To advance to the next lap, increment the index and evaluate new variables
                 lap_index += 1;
                 if lap_index >= average_speeds.len() {
-                    return Err("Not enough average speeds!")
+                    return Err("Not enough average speeds!");
                 }
 
                 // We subtract 1 since this iteration counts for the next lap, not the one
@@ -144,8 +170,34 @@ pub fn get_driving_speeds(
                 driving_speeds.push(lap_speed)
             }
         }
-
     }
 
     Ok(driving_speeds)
+}
+
+/// Cap each speed at the speed limit at the vehicle's position when that speed begins.
+///
+/// # Arguments
+///
+/// * `speed_limits`: The speed limit (km/h) at each metre of distance from the start.
+/// * `speeds`: The desired speed (km/h) at each tick.
+/// * `tick`: The length of a tick (s).
+///
+/// Returns: The constrained speed (km/h) at each tick.
+pub fn constrain_speeds(
+    speed_limits: ArrayView1<'_, f64>,
+    speeds: ArrayView1<'_, f64>,
+    tick: i32,
+) -> Vec<f64> {
+    let mut distance: f64 = 0.0;
+
+    speeds
+        .iter()
+        .map(|speed: &f64| {
+            let speed_limit: f64 = speed_limits[distance.floor() as usize];
+            let vehicle_speed: f64 = f64::min(speed_limit, *speed);
+            distance += vehicle_speed * KMH_TO_MS * tick as f64;
+            vehicle_speed
+        })
+        .collect()
 }

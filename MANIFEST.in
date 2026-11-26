@@ -1,1 +1,1 @@
-include physics_rs.pyi
+include physics_rs/__init__.pyi

@@ -32,6 +32,10 @@ jobs:
       run: |
         rustup target add x86_64-unknown-linux-gnu || echo "Linux target already added"
 
+    - name: Test Rust crates
+      run: |
+        cargo test --workspace
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip

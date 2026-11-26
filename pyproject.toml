@@ -1,7 +1,7 @@
 # This file is maintained according to STG Specification #2: Physics Publishing
 
 [build-system]
-requires = ["setuptools<75", "setuptools-scm<8.2.0", "setuptools-rust"]
+requires = ["setuptools<75", "setuptools-scm<8.2.0", "setuptools-rust>=1.12"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -98,11 +98,22 @@ Documentation = "https://ubc-solar-physics.readthedocs.io/en/latest/"
 [tool.setuptools]
 packages = ["physics", "physics_rs"]
 
+[tool.uv]
+# Rebuild the extension during `uv run`/`uv sync` when any of these change, so editable installs pick
+# up Rust changes. Python changes need no rebuild in an editable install.
+cache-keys = [
+    { file = "pyproject.toml" },
+    { file = "Cargo.toml" },
+    { file = "Cargo.lock" },
+    { file = "crates/**/Cargo.toml" },
+    { file = "crates/**/*.rs" },
+]
+
 [[tool.setuptools-rust.ext-modules]]
-target = "physics_rs"    # Private Rust extension module to be nested into the Python package
-path = "Cargo.toml"      # Default value, can be omitted
-binding = "PyO3"         # Default value, can be omitted
-py-limited-api = "auto"  # Default value, can be omitted
+target = "physics_rs._physics_rs"         # Compiled module inside the physics_rs package, re-exported by its __init__.py
+path = "crates/physics-py/Cargo.toml"     # The bindings crate; the pure-Rust models are in crates/physics
+binding = "PyO3"                          # Default value, can be omitted
+py-limited-api = "auto"                   # Default value, can be omitted
 
 [tool.cibuildwheel]
 archs = "auto"  # Automatically detects architectures (e.g., x86, ARM)

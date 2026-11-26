@@ -1,0 +1,19 @@
+[package]
+name = "physics-py"
+version = "0.1.0"
+description = "Python bindings for UBC Solar's physics models, built into the `physics_rs._physics_rs` extension module"
+publish = false
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+# Must match the `#[pymodule]` name and the setuptools-rust target in pyproject.toml.
+name = "_physics_rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+physics = { package = "ubc-solar-physics", path = "../physics" }
+numpy = "0.30"
+pyo3 = "0.30.1"
